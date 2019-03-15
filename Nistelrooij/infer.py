@@ -1,6 +1,12 @@
 import numpy as np
 from scipy.stats import vonmises, norm
-from sklearn.utils.extmath import cartesian
+from RiF import GenerativeModel
+
+
+# transforms sigma values into kappa values
+def sig2kap(sig): #in degrees
+    sig2=numpy.square(sig)
+    return 3.9945e3/(sig2+0.0226e3)
 
 
 class PSI:
@@ -100,13 +106,41 @@ class PSI:
         self.P_frame[np.isnan(self.P_frame)] = 1e-307
 
     def log_likelihood(self):
-        log_prior = np.log(self.P_prior)
-        log_oto = np.log(self.P_oto)
-        log_frame = np.log(self.P_frame)
+        log_prior_cw = np.log(self.P_prior)
+        log_prior_ccw = np.log(1-self.P_prior)
+        del self.P_prior
 
-        self.log_lik = log_prior + log_oto + log_frame
+        log_oto_cw = np.log(self.P_oto)
+        log_oto_ccw = np.log(1-self.P_oto)
+        del self.P_oto
 
-        i = 1
+        log_frame_cw = np.log(self.P_frame)
+        log_frame_ccw = np.log(1-self.P_frame)
+        del self.P_frame
+
+        self.log_lik = np.zeros([2] + self.dims)
+
+        self.log_lik[1] = log_prior_cw + log_oto_cw + log_frame_cw
+        del log_prior_cw
+        del log_oto_cw
+        del log_frame_cw
+
+        self.log_lik[0] = log_prior_ccw + log_oto_ccw + log_frame_ccw
+        del log_prior_ccw
+        del log_oto_ccw
+        del log_frame_ccw
+
+    def add_data(self, responses):
+        summary = np.zeros(self.dims[:-3])
+
+        for i in range(self.n_head):
+            for j in range(self.n_frames):
+                for k in range(self.n_rods):
+                    for l in range(10):
+                        response = int(responses[i,j,k,l])
+                        summary += self.log_lik[response, :, :, :, :, :, :, i, j, k]
+
+        return summary
 
 
 psi = PSI(np.linspace(1, 3, 10) * np.pi / 180,
@@ -117,11 +151,27 @@ psi = PSI(np.linspace(1, 3, 10) * np.pi / 180,
           np.linspace(0.6, 1, 10),
           [0, 30 * np.pi / 180],
           np.linspace(-45, 45, 10) * np.pi / 180,
-          np.linspace(-7, 7, 5) * np.pi / 180,)
+          np.linspace(-7, 7, 5) * np.pi / 180)
+
 psi.prior()
 psi.oto()
 psi.frame()
 
 psi.log_likelihood()
 
+generativeModel = GenerativeModel(2.21 * np.pi / 180,
+                                  0.07,
+                                  6.5 * np.pi / 180,
+                                  138.42,
+                                  1.2,
+                                  0.8,
+                                  np.linspace(0, 30, 2) * np.pi / 180,
+                                  np.linspace(-45, 45, 10) * np.pi / 180,
+                                  np.linspace(-7, 7, 5) * np.pi / 180,)
+
+allResponses = generativeModel.getAllResponses()
+summary = psi.add_data(allResponses)
+
+parameter_index = np.argmin(summary)
+parameter_indices = np.unravel_index(parameter_index, summary.shape)
 i = 4
