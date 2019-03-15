@@ -8,8 +8,8 @@ Created on Thu Apr 12 12:04:28 2018
 
 import numpy as np
 from scipy.stats import vonmises
-import matplotlib.pyplot as plt
 from sklearn.utils.extmath import cartesian
+from tqdm import trange
 
 
 # Create parameter space and initialize prior and likelihood
@@ -42,14 +42,14 @@ class PSI_RiF:
         self.stim_selection = stim_selection
 
         # pre-compute likelihood and parameter prior
+        print 'computing likelihood'
         self.computeLikelihood()
-        print "computed likelihood"
+        print 'computing prior'
         self.computePrior()
-        print "computed prior"
 
         # compute easier-to-use parameter data-structure
+        print "computing parameter values cartesian product"
         self.computeCartesian()
-        print "computed parameter values cartesian product"
 
         # calculate best next stimulus with lowest entropy
         self.calcNextStim()
@@ -68,7 +68,7 @@ class PSI_RiF:
         P_oto = [self.__calcPOto(self.kappa_oto[i], theta_rod) for i in range(self.kappa_oto_num)]
         rod_index = [np.argmax(theta_rod >= self.rods[i]) for i in range(self.rod_num)]
 
-        for i in range(self.kappa_ver_num):
+        for i in trange(self.kappa_ver_num):
             for j in range(self.kappa_hor_num):
                 for k in range(self.tau_num):
                     # compute the 2D rod-frame distribution for the given kappas, tau and rods
@@ -155,15 +155,15 @@ class PSI_RiF:
 
         # determine next stimulus adaptively or randomly
         if self.stim_selection == 'adaptive':
-            self.calcAdaptiveStim(ps, pf)
+            self.__calcAdaptiveStim(ps, pf)
         elif self.stim_selection == 'random':
-            self.calcRandomStim()
+            self.__calcRandomStim()
         else:
             raise Exception, 'undefined stimulus selection mode: ' + self.stim_selection
 
         self.stim = (self.rods[self.stim1_index], self.frames[self.stim2_index])
 
-    def calcAdaptiveStim(self, ps, pf):
+    def __calcAdaptiveStim(self, ps, pf):
         # cannot take the log of 0
         self.paxs[self.paxs == 0.0] = 1.0e-10
         self.paxf[self.paxf == 0.0] = 1.0e-10
@@ -181,14 +181,14 @@ class PSI_RiF:
         self.stim1_index, self.stim2_index = idx
 
 
-    def calcRandomStim(self):
+    def __calcRandomStim(self):
         # randomly select next stimulus
         self.stim1_index = np.random.randint(self.rod_num)
         self.stim2_index = np.random.randint(self.frame_num)
 
 
     def addData(self, response):
-        # Update prior based on response
+        # update prior based on response
         if response == 1:
             self.prior = self.paxs[:, self.stim1_index, self.stim2_index]
         elif response == 0:
@@ -196,31 +196,15 @@ class PSI_RiF:
         else:
             self.prior = self.prior
 
-
-        # # compute MAP parameter values and variances
-        # self.params_MAP = self.theta[:, np.argmax(self.prior)]
-        # self.params_MAP = self.params_MAP.reshape(self.theta.shape[0], 1)
-        #
-        # diff_MAP = self.theta - self.params_MAP
-        # self.var_params_MAP = np.matmul(np.power(diff_MAP, 2), self.prior)
-        #
-        #
-        # # compute expected parameter values and variances
-        # self.params_exp = np.matmul(self.theta, self.prior)
-        # self.params_exp = self.params_exp.reshape(self.theta.shape[0], 1)
-        #
-        # diff_exp = self.theta - self.params_exp
-        # self.var_params_exp = np.matmul(np.power(diff_exp, 2), self.prior)
-
-
+        # update stimulus based on posterior
         self.calcNextStim()
 
 
     def calcParameterValues(self, mode):
         if mode == 'MAP':
-            params = self.calcParameterMAP()
+            params = self.__calcParameterValuesMAP()
         elif mode == 'mean':
-            params = self.calcParameterMean()
+            params = self.__calcParameterValuesMean()
         else:
             raise Exception, 'undefined parameter value calculation mode: ' + mode
 
@@ -235,12 +219,12 @@ class PSI_RiF:
 
 
     # calculate posterior parameter values based on MAP
-    def calcParameterMAP(self):
+    def __calcParameterValuesMAP(self):
         return self.theta[:, np.argmax(self.prior)]
 
 
     # calculate expected posterior parameter values
-    def calcParameterMean(self):
+    def __calcParameterValuesMean(self):
         return np.matmul(self.theta, self.prior)
   
 

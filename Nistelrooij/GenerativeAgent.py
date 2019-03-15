@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import vonmises
 from random import random
+from tqdm import trange
 
 
 class GenerativeAgent:
@@ -22,6 +23,7 @@ class GenerativeAgent:
         self.frame_num = len(self.frames)
 
         # pre-compute likelihood table
+        print 'computing generative distribution\n'
         self.makeProbTable()
 
 
