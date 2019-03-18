@@ -12,11 +12,11 @@ def sig2kap(sig): #in degrees
     return 3.9945e3/(sig2+0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 5)
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 5)
-tau = np.linspace(0.6, 1.0, 5)
-kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 5)
-lapse = np.linspace(0.0, 0.1, 5)
+kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 4)
+kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 4)
+tau = np.linspace(0.6, 1.0, 4)
+kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 4)
+lapse = np.linspace(0.0, 0.1, 4)
 
 rods = np.array([-7, -4, -2, -1, 0, 1, 2, 4, 7]) * np.pi / 180
 frames = np.linspace(-45, 40, 18) * np.pi / 180
@@ -49,15 +49,18 @@ for stim_selection in ['adaptive', 'random']:
     time.sleep(0.01)
 
     responses = []
-    for i in trange(iterations_num):
+    for _ in trange(iterations_num):
         # get stimulus from psi object
         rod, frame = psi.stim
 
         # get response from the generative model
-        responses.append(genAgent.getResponse(rod, frame))
+        response = genAgent.getResponse(rod, frame)
 
         # add data to psi object
-        psi.addData(responses[-1])
+        psi.addData(responses)
+
+        # bookkeeping
+        responses.append(response)
 
     # print results
     print 'Parameters of generative model'
