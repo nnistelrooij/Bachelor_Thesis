@@ -8,6 +8,7 @@ Created on Thu Apr 12 12:04:28 2018
 
 import numpy as np
 from scipy.stats import vonmises
+from scipy.interpolate import splev, splrep
 from sklearn.utils.extmath import cartesian
 from tqdm import trange
 
@@ -15,7 +16,7 @@ from tqdm import trange
 # Create parameter space and initialize prior and likelihood
 class PSI_RiF:
 
-    def __init__(self, kappa_ver, kappa_hor, tau, kappa_oto, lapse, rods, frames, stim_selection):
+    def __init__(self, kappa_ver, kappa_hor, tau, kappa_oto, lapse, rods, frames, stim_selection='adaptive'):
         # initialize parameter grids
         self.kappa_ver = kappa_ver
         self.kappa_hor = kappa_hor
@@ -64,9 +65,8 @@ class PSI_RiF:
         P = np.zeros([self.kappa_ver_num, self.kappa_hor_num, self.tau_num, self.kappa_oto_num, self.lapse_num,
                       self.rod_num, self.frame_num])
 
-        # initialize recurring variables before for-loops
+        # initialize otolith distributions before for-loops
         P_oto = [self.__calcPOto(self.kappa_oto[i], theta_rod) for i in range(self.kappa_oto_num)]
-        rod_index = [np.argmax(theta_rod >= self.rods[i]) for i in range(self.rod_num)]
 
         for i in trange(self.kappa_ver_num):
             for j in range(self.kappa_hor_num):
@@ -78,15 +78,15 @@ class PSI_RiF:
                         # compute the cumulative density of all distributions convolved
                         cdf = np.cumsum(P_frame * P_oto[l], 0) / np.sum(P_frame * P_oto[l], 0)
 
-                        # select rods in self.rods
-                        cdf = cdf[rod_index]
+                        # reduce cdf to |rods|, |frames| by using spline interpolation
+                        cdf = self.__reduceCDF(cdf, theta_rod)
 
                         for m in range(self.lapse_num):
                             # add lapse probability to distribution
-                            cdf = self.lapse[m] + (1 - 2 * self.lapse[m]) * cdf
+                            PCW = self.lapse[m] + (1 - 2 * self.lapse[m]) * cdf
 
                             # add distribution to look-up table
-                            P[i, j, k, l, m] = cdf
+                            P[i, j, k, l, m] = PCW
 
         # reshape to |param_space|, |rods|, |frames|
         self.lookup = np.reshape(P,
@@ -135,6 +135,21 @@ class PSI_RiF:
     def __calcPOto(self, kappa_oto, theta_rod):
         # a simple von Mises distribution centered at 0 degrees
         return vonmises.pdf(theta_rod, kappa_oto).reshape(len(theta_rod), 1)
+
+
+    def __reduceCDF(self, cdf, theta_rod):
+        # initialize reduced cdf with dimensions |rods|, |frames|
+        cdf_reduced = np.zeros([self.rod_num, self.frame_num])
+
+        # for every frame orientation, calculate cumulative prob for rods in self.rods
+        for i in range(self.frame_num):
+            # use spline interpolation to get a continuous cdf
+            cdf_continuous = splrep(theta_rod, cdf[:, i], s=0)
+
+            # select cumulative probs of rods in self.rods from continuous cdf
+            cdf_reduced[:, i] = splev(self.rods, cdf_continuous, der=0)
+
+        return cdf_reduced
 
         
     def calcNextStim(self):
@@ -226,6 +241,3 @@ class PSI_RiF:
     # calculate expected posterior parameter values
     def __calcParameterValuesMean(self):
         return np.matmul(self.theta, self.prior)
-  
-
-

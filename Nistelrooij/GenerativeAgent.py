@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import vonmises
-from random import random
-from tqdm import trange
+from scipy.interpolate import splev, splrep
 
 
 class GenerativeAgent:
@@ -26,10 +25,11 @@ class GenerativeAgent:
         print 'computing generative distribution\n'
         self.makeProbTable()
 
-
     def makeProbTable(self):
         # the rods I need for the cumulative density function
         theta_rod = np.linspace(-np.pi, np.pi, 10000)
+
+        # make space for look-up table
         self.prob_table = np.zeros([self.rod_num, self.frame_num])
 
         # compute kappas
@@ -56,18 +56,22 @@ class GenerativeAgent:
             # the otoliths
             P_oto = vonmises.pdf(theta_rod, self.kappa_oto)
 
-            # cumulatitve response distribution per frame
+            # cumulative response distribution per frame
             cdf = np.cumsum(P_frame * P_oto) / np.sum(P_frame * P_oto)
 
+            # use spline interpolation to get a continuous cdf
+            cdf_continuous = splrep(theta_rod, cdf, s=0)
+
+            # select cumulative probs of rods in self.rods from continuous cdf
+            cdf = splev(self.rods, cdf_continuous, der=0)
+
             # add lapse probability to distribution
-            cdf = self.lapse + (1 - 2 * self.lapse) * cdf
+            PCW = self.lapse + (1 - 2 * self.lapse) * cdf
 
-            for i in range(self.rod_num):
-                # add distribution to lookup table
-                idx = np.argmax(theta_rod >= self.rods[i])
-                self.prob_table[i, j] = cdf[idx]
+            # add probabilities to look-up table
+            self.prob_table[:, j] = PCW
 
-    # determine the response of agent on particular frame and rod combination
+    # determine the response of agent on particular rod and frame combination
     def getResponse(self, stim_rod, stim_frame):
         # find index of stimulus
         idx_rod = np.where(self.rods == stim_rod)[0]
