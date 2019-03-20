@@ -18,7 +18,7 @@ def generativeModel(a_oto,b_oto,sigma_prior,kappa_ver, kappa_hor,tau,frames,rods
     theta_head = [0*np.pi/180, 30*np.pi/180]
     
     # you might want to run a loop over head-angles
-    j=0
+    j=1
     
     # Aocr is normally a free parameter (the uncompensated ocular counterroll)
     Aocr = 14.6*np.pi/180 # convert to radians and fixed across subjects 
@@ -106,7 +106,7 @@ def generativeModel(a_oto,b_oto,sigma_prior,kappa_ver, kappa_hor,tau,frames,rods
 
 
 # stimuli and generative parameters
-nframes = 25
+nframes = 251
 nrods = 11111
 
 # stimuli should be all in radians
@@ -142,5 +142,3 @@ for k in range(0,len(frames)):
      
 plt.figure()
 plt.plot(frames*180/np.pi,MAP*180/np.pi,frames*180/np.pi,mu*180/np.pi)
-
-plt.show()
