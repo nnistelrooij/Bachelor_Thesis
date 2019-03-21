@@ -13,15 +13,15 @@ def sig2kap(sig): #in degrees
     return 3.9945e3/(sig2+0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 6)
+kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 4)
 # kappa_ver = [sig2kap(4.9)]
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 6)
+kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 4)
 # kappa_hor = [sig2kap(52.0)]
-tau = np.linspace(0.6, 1.0, 6)
+tau = np.linspace(0.6, 1.0, 4)
 # tau = [0.8]
-kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 6)
+kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 4)
 # kappa_oto = [sig2kap(2.2)]
-lapse = np.linspace(0.0, 0.1, 6)
+lapse = np.linspace(0.0, 0.1, 4)
 # lapse = [0.0]
 
 rods = np.array([-7, -4, -2, -1, 0, 1, 2, 4, 7]) * np.pi / 180

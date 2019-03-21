@@ -225,10 +225,10 @@ class PSI_RiF:
 
         # put values in dictionary
         params_dict = {'kappa_ver': params[0],
-                      'kappa_hor': params[1],
-                      'tau': params[2],
-                      'kappa_oto': params[3],
-                      'lapse': params[4]}
+                       'kappa_hor': params[1],
+                       'tau': params[2],
+                       'kappa_oto': params[3],
+                       'lapse': params[4]}
 
         return params_dict
 
