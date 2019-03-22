@@ -16,17 +16,17 @@ from tqdm import trange
 # Create parameter space and initialize prior and likelihood
 class PSI_RiF:
 
-    def __init__(self, kappa_ver, kappa_hor, tau, kappa_oto, lapse, rods, frames, stim_selection='adaptive'):
+    def __init__(self, params, stimuli, stim_selection='adaptive'):
         # initialize parameter grids
-        self.kappa_ver = kappa_ver
-        self.kappa_hor = kappa_hor
-        self.tau = tau
-        self.kappa_oto = kappa_oto
-        self.lapse = lapse
+        self.kappa_ver = params['kappa_ver']
+        self.kappa_hor = params['kappa_hor']
+        self.tau = params['tau']
+        self.kappa_oto = params['kappa_oto']
+        self.lapse = params['lapse']
 
-        # initialize stimulus grids
-        self.rods = rods
-        self.frames = frames
+        # Initialize stimulus grids
+        self.rods = stimuli['rods']
+        self.frames = stimuli['frames']
 
         # dimensions of the parameter space
         self.kappa_ver_num = len(self.kappa_ver)
@@ -215,7 +215,7 @@ class PSI_RiF:
         self.calcNextStim()
 
 
-    def calcParameterValues(self, mode):
+    def calcParameterValues(self, mode='mean'):
         if mode == 'MAP':
             params = self.__calcParameterValuesMAP()
         elif mode == 'mean':

@@ -5,17 +5,17 @@ from scipy.interpolate import splev, splrep
 
 class GenerativeAgent:
 
-    def __init__(self, kappa_ver, kappa_hor, tau, kappa_oto, lapse, rods, frames):
+    def __init__(self, params, stimuli):
         # Initialize parameter values
-        self.kappa_ver = kappa_ver
-        self.kappa_hor = kappa_hor
-        self.tau = tau
-        self.kappa_oto = kappa_oto
-        self.lapse = lapse
+        self.kappa_ver = params['kappa_ver']
+        self.kappa_hor = params['kappa_hor']
+        self.tau = params['tau']
+        self.kappa_oto = params['kappa_oto']
+        self.lapse = params['lapse']
 
         # Initialize stimulus grids
-        self.rods = rods
-        self.frames = frames
+        self.rods = stimuli['rods']
+        self.frames = stimuli['frames']
 
         # dimensions of the 2D stimulus space
         self.rod_num = len(self.rods)
