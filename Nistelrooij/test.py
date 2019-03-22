@@ -1,9 +1,10 @@
 import numpy as np
 from tqdm import trange
+import matplotlib.pyplot as plt
 
 from GenerativeAgent import GenerativeAgent
 from PSI_RiF import PSI_RiF
-from plots import *
+from plots import Plotter
 
 
 # transforms sigma values into kappa values
@@ -12,16 +13,16 @@ def sig2kap(sig):  # in degrees
     return 3.9945e3 / (sig2 + 0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
-# kappa_ver = [sig2kap(4.9)]
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
-# kappa_hor = [sig2kap(52.0)]
-tau = np.linspace(0.6, 1.0, 8)
+# kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
+kappa_ver = [sig2kap(4.9)]
+# kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
+kappa_hor = [sig2kap(52.0)]
+tau = np.linspace(0.6, 1.0, 25)
 # tau = [0.8]
-kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 8)
-# kappa_oto = [sig2kap(2.2)]
-lapse = np.linspace(0.0, 0.1, 8)
-# lapse = [0.02]
+# kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 8)
+kappa_oto = [sig2kap(2.2)]
+# lapse = np.linspace(0.0, 0.1, 25)
+lapse = [0.02]
 
 params = {'kappa_ver': kappa_ver,
           'kappa_hor': kappa_hor,
@@ -51,11 +52,11 @@ stimuli = {'rods': rods, 'frames': frames}
 
 # initialize generative agent and show rod distribution plot for each frame orientation
 genAgent = GenerativeAgent(params_gen, stimuli)
-plotProbTable(genAgent)
+Plotter.plotProbTable(genAgent)
 
 # test for adaptive and random stimulus selection
 iterations_num = 500
-for stim_selection in ['adaptive', 'random']:
+for stim_selection in ['random']:
     # initialize psi object
     psi = PSI_RiF(params, stimuli, stim_selection)
 
@@ -70,11 +71,11 @@ for stim_selection in ['adaptive', 'random']:
         # get stimulus from psi object
         rod, frame = psi.stim
 
-        # plot selected stimuli
-        plotter.plotStimuli(psi)
-
-        # plot updated parameter values based on mean
-        plotter.plotParameterValues(psi)
+        # # plot selected stimuli
+        # plotter.plotStimuli(psi)
+        #
+        # # plot updated parameter values based on mean
+        # plotter.plotParameterValues(psi)
 
         # plot parameter distributions of current trial
         plotter.plotParameterDistributions(psi)
@@ -97,3 +98,6 @@ for stim_selection in ['adaptive', 'random']:
     print psi.calcParameterValues('mean')
     print 'First 50 responses'
     print responses[:50], '\n'
+
+# do not close plots when program finishes
+plt.show()

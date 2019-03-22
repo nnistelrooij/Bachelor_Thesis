@@ -2,15 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plotProbTable(genAgent):
-    plt.plot(genAgent.rods * 180 / np.pi, genAgent.prob_table)
-    plt.title('Generative Rod Distribution for Each Frame Orientation')
-    plt.xlabel('rod [deg]')
-    plt.ylabel('P(right)')
-    plt.pause(0.0001)
-
-
 class Plotter:
+
+    @staticmethod
+    def plotProbTable(genAgent):
+        # initialize prob table figure and plot
+        prob_table_figure = plt.figure()
+        prob_table_plot = prob_table_figure.add_subplot(1, 1, 1)
+
+        # plot prob table
+        prob_table_plot.plot(genAgent.rods * 180 / np.pi, genAgent.prob_table)
+        prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
+        prob_table_plot.set_xlabel('rod [deg]')
+        prob_table_plot.set_ylabel('P(right)')
+
+        # pause to let pyplot draw graphs
+        plt.pause(0.0001)
+
 
     def __init__(self, iterations_num, params, params_gen, stimuli):
         self.iterations_num = iterations_num
