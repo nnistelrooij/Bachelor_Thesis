@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 
 class Plotter:
@@ -23,9 +24,10 @@ class Plotter:
     def __init__(self, iterations_num, params, params_gen, stimuli):
         self.iterations_num = iterations_num
 
-        # set the parameter values and the shape when combining the parameter values
+        # set the parameter grids, keys and the shape when combining the parameter grids
         self.params = params
-        self.params_shape = [len(self.params[param]) for param in ['kappa_ver', 'kappa_hor', 'tau', 'kappa_oto', 'lapse']]
+        self.param_keys = ['kappa_ver', 'kappa_hor', 'tau', 'kappa_oto', 'lapse']
+        self.params_shape = [len(self.params[param]) for param in self.param_keys]
 
         # set the generative parameter values
         self.params_gen = params_gen
@@ -36,6 +38,9 @@ class Plotter:
         self.selected_stimuli = None
         self.param_values = None
         self.param_distributions = None
+
+        # number of trials before figure(s) is/are plotted again
+        self.plot_period = self.iterations_num / 10
 
 
     def initStimuliFigure(self):
@@ -63,8 +68,8 @@ class Plotter:
         # compute current trial number
         trial_num = len(self.selected_stimuli['rods'])
 
-        # only plot every 10 trials
-        if trial_num == 1 or (trial_num % 10) == 0:
+        # only plot every self.plot_period trials
+        if trial_num == 1 or (trial_num % self.plot_period) == 0:
             # use shorter name
             plot = self.stimuli_plot
 
@@ -92,9 +97,9 @@ class Plotter:
         self.point_size = 5
 
         # initialize parameter values and parameter values plots dictionaries
-        self.param_values = {'MAP': {param: [] for param in self.params.keys()},
-                             'mean': {param: [] for param in self.params.keys()}}
-        self.param_values_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
+        self.param_values = {'MAP': {param: [] for param in self.param_keys},
+                             'mean': {param: [] for param in self.param_keys}}
+        self.param_values_plots = {param: plots[i] for param, i in zip(self.param_keys, range(len(self.params)))}
 
 
     def plotParameterValues(self, psi):
@@ -105,21 +110,21 @@ class Plotter:
         param_values_mean = psi.calcParameterValues('mean')
 
         # add parameter values to self.param_values
-        for param in self.params.keys():
+        for param in self.param_keys:
             self.param_values['MAP'][param].append(param_values_MAP[param])
             self.param_values['mean'][param].append(param_values_mean[param])
 
         # compute current trial number
-        trial_num = len(self.param_values['MAP']['kappa_ver'])
+        trial_num = len(self.param_values['MAP'][self.param_keys[0]])
 
-        # only draw plots every 10 trials
-        if trial_num == 1 or (trial_num % 10) == 0:
+        # only draw plots every self.plot_period trials
+        if trial_num == 1 or (trial_num % self.plot_period) == 0:
             # draw each parameter's values plot
-            for param in self.params.keys():
+            for param in self.param_keys:
                 self.__plotParemeterValues(param, trial_num)
 
             # add a single legend to the figure
-            handles, labels = self.param_values_plots['kappa_ver'].get_legend_handles_labels()
+            handles, labels = self.param_values_plots[self.param_keys[0]].get_legend_handles_labels()
             self.param_values_figure.legend(handles, labels, loc='upper right', title='Legend')
 
             # fit all the plots to the screen with no overlapping text
@@ -144,46 +149,48 @@ class Plotter:
         plot.set_title('Calculated %s Values for Each Trial' % param)
 
 
-    def initParemeterDistributionsFigure(self):
+    def initParemeterDistributionsFigure(self, projection):
         # initialize calculated parameter values plots
         self.param_distributions_figure = plt.figure(figsize=(15, 8))
-        plots = [self.param_distributions_figure.add_subplot(2, 3, i) for i in [1, 2, 4, 5, 6]]
+        plots = [self.param_distributions_figure.add_subplot(2, 3, i, projection=projection) for i in [1, 2, 4, 5, 6]]
 
-        # initialize parameter plot dictionary
-        self.param_distributions_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
-
-        # distributions are not stored, so trial_num member is needed for this figure.
-        self.trial_num = 0
+        # initialize parameter distributions and parameter distribution plots dictionaries
+        self.param_distributions = {param: [] for param in self.param_keys}
+        self.param_distributions_plots = {param: plots[i] for param, i in zip(self.param_keys, range(len(self.params)))}
 
 
-    def plotParameterDistributions(self, psi):
+    def plotParameterDistributions(self, psi, projection=None):
         if self.param_distributions is None:
-            self.initParemeterDistributionsFigure()
+            self.initParemeterDistributionsFigure(projection)
 
-        self.trial_num += 1
+        # get posterior from psi object in right shape
+        posterior = psi.prior.reshape(self.params_shape)
 
-        # only draw plots every 10 trials
-        if self.trial_num == 1 or (self.trial_num % 10) == 0:
-            # get posterior from psi object in right shape
-            posterior = psi.prior.reshape(self.params_shape)
+        # compute parameter distributions
+        for param, i in zip(self.param_keys, range(len(self.params))):
+            # all axes except the axis of the current parameter
+            axes = tuple(k for k in range(len(self.params)) if k != i)
 
-            # compute the distributions of the parameters
-            kappa_ver = posterior.sum(4).sum(3).sum(2).sum(1)
-            kappa_hor = posterior.sum(4).sum(3).sum(2).sum(0)
-            tau = posterior.sum(4).sum(3).sum(1).sum(0)
-            kappa_oto = posterior.sum(4).sum(2).sum(1).sum(0)
-            lapse = posterior.sum(3).sum(2).sum(1).sum(0)
+            # compute parameter distribution
+            param_distribution = posterior.sum(axes)
 
-            # put distributions in dictionary
-            self.param_distributions = {'kappa_ver': kappa_ver, 'kappa_hor': kappa_hor, 'tau': tau,
-                                        'kappa_oto': kappa_oto, 'lapse': lapse}
+            # add parameter distribution to self.param_distributions
+            self.param_distributions[param].append(param_distribution)
 
-            # plot the plot for each parameter
-            for param in self.params.keys():
-                self.__plotParameterDistributions(param, self.trial_num)
+        # compute current trial number
+        trial_num = len(self.param_distributions[self.param_keys[0]])
 
-            # add a single legend to the figure with the number of trials
-            handles, labels = self.param_distributions_plots['kappa_ver'].get_legend_handles_labels()
+        # only draw plots every self.plot_period trials
+        if trial_num == 1 or (trial_num % self.plot_period) == 0:
+            # plot the plot for each parameter using the specified projection
+            for param in self.param_keys:
+                if projection == '3d':
+                    self.__plotParameterDistributions3D(param, trial_num)
+                else:
+                    self.__plotParameterDistributions(param, trial_num)
+
+            # add a single legend to the figure
+            handles, labels = self.param_distributions_plots[self.param_keys[0]].get_legend_handles_labels()
             self.param_distributions_figure.legend(handles, labels, loc='upper right', title='Legend')
 
             # fit all the plots to the screen with no overlapping text
@@ -200,8 +207,47 @@ class Plotter:
         # plot specific parameter distribution
         plot.clear()
         plot.vlines(self.params_gen[param], 0.0, 1.0, label='generative parameter value')
-        plot.plot(self.params[param], self.param_distributions[param], label='parameter value distribution')
+        plot.plot(self.params[param], self.param_distributions[param][-1], label='parameter value distribution')
         plot.set_xlabel(param)
         plot.set_ylabel('P(%s = x)' % param)
         plot.set_ylim(0.0, 1.0)
         plot.set_title('%s Distribution for Trial %d' % (param, trial_num))
+
+
+    def __plotParameterDistributions3D(self, param, trial_num):
+        # retrieve specific parameter plot from self.param_distributions_plots
+        plot = self.param_distributions_plots[param]
+
+        # clear the plot
+        plot.clear()
+
+        # make data for generative parameter value surface
+        param_gen = self.params_gen[param]
+        X_gen = np.array([[0, self.iterations_num], [0, self.iterations_num]])
+        Y_gen = np.array([[param_gen, param_gen], [param_gen, param_gen]])
+        Z_gen = np.array([[0.0, 0.0], [1.0, 1.0]])
+
+        # plot generative parameter value surface
+        surface_gen = plot.plot_surface(X_gen, Y_gen, Z_gen, alpha=0.25, label='generative parameter value')
+
+        # make data for parameter distribution surface
+        X, Y = np.meshgrid(np.arange(trial_num), self.params[param])
+        Z = np.array(self.param_distributions[param]).transpose()
+
+        # plot parameter distribution surface
+        surface = plot.plot_surface(X, Y, Z, label='parameter value distribution')
+
+        # set the other plot settings
+        plot.view_init(8, 340)
+        plot.set_xlabel('trial number')
+        plot.set_ylabel(param)
+        plot.set_zlabel('P(%s = x)' % param)
+        plot.set_xlim(0, self.iterations_num)
+        plot.set_zlim(0.0, 1.0)
+        plot.set_title('%s Distribution for Each Trial' % param)
+
+        # I get an error when I do not use these four lines
+        surface._facecolors2d = surface._facecolors3d
+        surface._edgecolors2d = surface._facecolors3d
+        surface_gen._facecolors2d = surface._facecolors3d
+        surface_gen._edgecolors2d = surface._facecolors3d

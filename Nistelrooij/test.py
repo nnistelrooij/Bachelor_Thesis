@@ -21,7 +21,7 @@ tau = np.linspace(0.6, 1.0, 25)
 # tau = [0.8]
 # kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 8)
 kappa_oto = [sig2kap(2.2)]
-# lapse = np.linspace(0.0, 0.1, 25)
+# lapse = np.linspace(0.0, 0.1, 8)
 lapse = [0.02]
 
 params = {'kappa_ver': kappa_ver,
@@ -56,7 +56,7 @@ Plotter.plotProbTable(genAgent)
 
 # test for adaptive and random stimulus selection
 iterations_num = 500
-for stim_selection in ['random']:
+for stim_selection in ['adaptive', 'random']:
     # initialize psi object
     psi = PSI_RiF(params, stimuli, stim_selection)
 
@@ -68,17 +68,23 @@ for stim_selection in ['random']:
 
     responses = []
     for _ in trange(iterations_num):
-        # get stimulus from psi object
-        rod, frame = psi.stim
+        # plot selected stimuli
+        plotter.plotStimuli(psi)
 
-        # # plot selected stimuli
-        # plotter.plotStimuli(psi)
-        #
-        # # plot updated parameter values based on mean
-        # plotter.plotParameterValues(psi)
+        # plot updated parameter values based on mean and MAP
+        plotter.plotParameterValues(psi)
+
+        # the parameter distributions may be plotted at most once (so comment at least one)
 
         # plot parameter distributions of current trial
         plotter.plotParameterDistributions(psi)
+
+        # plot parameter distributions of each trial as surfaces
+        plotter.plotParameterDistributions(psi, '3d')
+
+
+        # get stimulus from psi object
+        rod, frame = psi.stim
 
         # get response from the generative model
         response = genAgent.getResponse(rod, frame)
