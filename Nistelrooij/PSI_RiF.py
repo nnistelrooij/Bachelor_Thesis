@@ -95,17 +95,6 @@ class PSI_RiF:
                                  order="F")
 
 
-    def computePrior(self):
-        # uniform discrete prior
-        self.prior = np.ones(self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num) /\
-                        (self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num)
-
-
-    def computeCartesian(self):
-        # all the combinations of all parameter values
-        self.theta = cartesian([self.kappa_ver, self.kappa_hor, self.tau, self.kappa_oto, self.lapse]).transpose()
-
-
     def __calcPFrame(self, kappa_ver, kappa_hor, tau, theta_rod):
         # computes kappas
         kappa1 = kappa_ver -\
@@ -150,6 +139,17 @@ class PSI_RiF:
             cdf_reduced[:, i] = splev(self.rods, cdf_continuous, der=0)
 
         return cdf_reduced
+
+
+    def computePrior(self):
+        # uniform discrete prior
+        self.prior = np.ones(self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num) /\
+                        (self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num)
+
+
+    def computeCartesian(self):
+        # all the combinations of all parameter values
+        self.theta = cartesian([self.kappa_ver, self.kappa_hor, self.tau, self.kappa_oto, self.lapse]).transpose()
 
         
     def calcNextStim(self):
@@ -217,20 +217,20 @@ class PSI_RiF:
 
     def calcParameterValues(self, mode='mean'):
         if mode == 'MAP':
-            params = self.__calcParameterValuesMAP()
+            param_values = self.__calcParameterValuesMAP()
         elif mode == 'mean':
-            params = self.__calcParameterValuesMean()
+            param_values = self.__calcParameterValuesMean()
         else:
             raise Exception, 'undefined parameter value calculation mode: ' + mode
 
-        # put values in dictionary
-        params_dict = {'kappa_ver': params[0],
-                       'kappa_hor': params[1],
-                       'tau': params[2],
-                       'kappa_oto': params[3],
-                       'lapse': params[4]}
+        # put parameter values in dictionary
+        param_values_dict = {'kappa_ver': param_values[0],
+                             'kappa_hor': param_values[1],
+                             'tau': param_values[2],
+                             'kappa_oto': param_values[3],
+                             'lapse': param_values[4]}
 
-        return params_dict
+        return param_values_dict
 
 
     # calculate posterior parameter values based on MAP
@@ -241,3 +241,29 @@ class PSI_RiF:
     # calculate expected posterior parameter values
     def __calcParameterValuesMean(self):
         return np.matmul(self.theta, self.prior)
+
+
+    def calcParameterDistributions(self):
+        # get posterior in right shape
+        posterior = self.prior.reshape([self.kappa_ver_num, self.kappa_hor_num, self.tau_num, self.kappa_oto_num, self.lapse_num])
+
+        param_distributions = []
+        for i in range(posterior.ndim):
+            # all axes except the axis of the current parameter
+            axes = tuple(k for k in range(posterior.ndim) if k != i)
+
+            # calculate parameter distribution
+            param_distribution = posterior.sum(axes)
+
+            # add parameter distribution to param_distributions
+            param_distributions.append(param_distribution)
+
+        # put parameter distributions in dictionary
+        param_distributions_dict = {'kappa_ver': param_distributions[0],
+                                    'kappa_hor': param_distributions[1],
+                                    'tau': param_distributions[2],
+                                    'kappa_oto': param_distributions[3],
+                                    'lapse': param_distributions[4]}
+
+        return param_distributions_dict
+

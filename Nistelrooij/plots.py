@@ -17,36 +17,33 @@ class Plotter:
         prob_table_plot.set_xlabel('rod [deg]')
         prob_table_plot.set_ylabel('P(right)')
 
-        # pause to let pyplot draw graphs
+        # pause to let pyplot draw graph
         plt.pause(0.0001)
 
 
-    def __init__(self, iterations_num, params, params_gen, stimuli):
+    def __init__(self, iterations_num, params, params_gen, stimuli, plot_period=25, point_size=5):
+        # set the members of the Plotter object
         self.iterations_num = iterations_num
-
-        # set the parameter grids, keys and the shape when combining the parameter grids
         self.params = params
-        self.param_keys = ['kappa_ver', 'kappa_hor', 'tau', 'kappa_oto', 'lapse']
-        self.params_shape = [len(self.params[param]) for param in self.param_keys]
-
-        # set the generative parameter values
         self.params_gen = params_gen
-
         self.stimuli = stimuli
+
+        # number of trials before figure(s) is/are plotted again
+        self.plot_period = plot_period
+
+        # size of points in parameter values and selected stimuli figures
+        self.point_size = point_size
 
         # initialize selected stimuli and params values and distributions as Nones
         self.selected_stimuli = None
         self.param_values = None
         self.param_distributions = None
 
-        # number of trials before figure(s) is/are plotted again
-        self.plot_period = self.iterations_num / 10
-
 
     def initStimuliFigure(self):
         # initialize selected stimuli plot
-        stimuli_figure = plt.figure()
-        self.stimuli_plot = stimuli_figure.add_subplot(1, 1, 1)
+        selected_stimuli_figure = plt.figure()
+        self.selected_stimuli_plot = selected_stimuli_figure.add_subplot(1, 1, 1)
 
         # initialize selected stimuli
         self.selected_stimuli = {'rods': [], 'frames': []}
@@ -60,7 +57,7 @@ class Plotter:
         if self.selected_stimuli is None:
             self.initStimuliFigure()
 
-        # add stimuli to self.stimuli in degrees
+        # add stimuli to self.selected_stimuli in degrees
         rod, frame = psi.stim
         self.selected_stimuli['rods'].append(rod * 180.0 / np.pi)
         self.selected_stimuli['frames'].append(frame * 180.0 / np.pi)
@@ -71,12 +68,12 @@ class Plotter:
         # only plot every self.plot_period trials
         if trial_num == 1 or (trial_num % self.plot_period) == 0:
             # use shorter name
-            plot = self.stimuli_plot
+            plot = self.selected_stimuli_plot
 
             # plot selected stimuli
             plot.clear()
-            plot.scatter(np.arange(trial_num), self.selected_stimuli['rods'], label='rod [deg]')
-            plot.scatter(np.arange(trial_num), self.selected_stimuli['frames'], label='frame [deg]')
+            plot.scatter(np.arange(trial_num), self.selected_stimuli['rods'], s=self.point_size, label='rod [deg]')
+            plot.scatter(np.arange(trial_num), self.selected_stimuli['frames'], s=self.point_size, label='frame [deg]')
             plot.set_xlabel('trial number')
             plot.set_ylabel('selected stimulus [deg]')
             plot.set_xlim(0, self.iterations_num)
@@ -93,13 +90,10 @@ class Plotter:
         self.param_values_figure = plt.figure(figsize=(15, 8))
         plots = [self.param_values_figure.add_subplot(2, 3, i) for i in [1, 2, 4, 5, 6]]
 
-        # size of points in parameter values figure
-        self.point_size = 5
-
         # initialize parameter values and parameter values plots dictionaries
-        self.param_values = {'MAP': {param: [] for param in self.param_keys},
-                             'mean': {param: [] for param in self.param_keys}}
-        self.param_values_plots = {param: plots[i] for param, i in zip(self.param_keys, range(len(self.params)))}
+        self.param_values = {'MAP': {param: [] for param in self.params.keys()},
+                             'mean': {param: [] for param in self.params.keys()}}
+        self.param_values_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
 
 
     def plotParameterValues(self, psi):
@@ -110,21 +104,21 @@ class Plotter:
         param_values_mean = psi.calcParameterValues('mean')
 
         # add parameter values to self.param_values
-        for param in self.param_keys:
+        for param in self.params.keys():
             self.param_values['MAP'][param].append(param_values_MAP[param])
             self.param_values['mean'][param].append(param_values_mean[param])
 
         # compute current trial number
-        trial_num = len(self.param_values['MAP'][self.param_keys[0]])
+        trial_num = len(self.param_values['MAP'][self.params.keys()[0]])
 
         # only draw plots every self.plot_period trials
         if trial_num == 1 or (trial_num % self.plot_period) == 0:
             # draw each parameter's values plot
-            for param in self.param_keys:
+            for param in self.params.keys():
                 self.__plotParemeterValues(param, trial_num)
 
             # add a single legend to the figure
-            handles, labels = self.param_values_plots[self.param_keys[0]].get_legend_handles_labels()
+            handles, labels = self.param_values_plots[self.params.keys()[0]].get_legend_handles_labels()
             self.param_values_figure.legend(handles, labels, loc='upper right', title='Legend')
 
             # fit all the plots to the screen with no overlapping text
@@ -155,42 +149,34 @@ class Plotter:
         plots = [self.param_distributions_figure.add_subplot(2, 3, i, projection=projection) for i in [1, 2, 4, 5, 6]]
 
         # initialize parameter distributions and parameter distribution plots dictionaries
-        self.param_distributions = {param: [] for param in self.param_keys}
-        self.param_distributions_plots = {param: plots[i] for param, i in zip(self.param_keys, range(len(self.params)))}
+        self.param_distributions = {param: [] for param in self.params.keys()}
+        self.param_distributions_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
 
 
     def plotParameterDistributions(self, psi, projection=None):
         if self.param_distributions is None:
             self.initParemeterDistributionsFigure(projection)
 
-        # get posterior from psi object in right shape
-        posterior = psi.prior.reshape(self.params_shape)
+        param_distributions = psi.calcParameterDistributions()
 
-        # compute parameter distributions
-        for param, i in zip(self.param_keys, range(len(self.params))):
-            # all axes except the axis of the current parameter
-            axes = tuple(k for k in range(len(self.params)) if k != i)
-
-            # compute parameter distribution
-            param_distribution = posterior.sum(axes)
-
-            # add parameter distribution to self.param_distributions
-            self.param_distributions[param].append(param_distribution)
+        # add parameter distributions to self.param_distributions
+        for param in self.params.keys():
+            self.param_distributions[param].append(param_distributions[param])
 
         # compute current trial number
-        trial_num = len(self.param_distributions[self.param_keys[0]])
+        trial_num = len(self.param_distributions[self.params.keys()[0]])
 
         # only draw plots every self.plot_period trials
         if trial_num == 1 or (trial_num % self.plot_period) == 0:
             # plot the plot for each parameter using the specified projection
-            for param in self.param_keys:
+            for param in self.params.keys():
                 if projection == '3d':
                     self.__plotParameterDistributions3D(param, trial_num)
                 else:
                     self.__plotParameterDistributions(param, trial_num)
 
             # add a single legend to the figure
-            handles, labels = self.param_distributions_plots[self.param_keys[0]].get_legend_handles_labels()
+            handles, labels = self.param_distributions_plots[self.params.keys()[0]].get_legend_handles_labels()
             self.param_distributions_figure.legend(handles, labels, loc='upper right', title='Legend')
 
             # fit all the plots to the screen with no overlapping text
