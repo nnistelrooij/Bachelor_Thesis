@@ -7,7 +7,7 @@ Created on Thu Apr 12 12:04:28 2018
 """
 
 import numpy as np
-from scipy.stats import vonmises
+from scipy.stats import vonmises, beta
 from scipy.interpolate import splev, splrep
 from sklearn.utils.extmath import cartesian
 from tqdm import trange
@@ -142,9 +142,38 @@ class PSI_RiF:
 
 
     def computePrior(self):
-        # uniform discrete prior
-        self.prior = np.ones(self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num) /\
-                        (self.kappa_ver_num * self.kappa_hor_num * self.tau_num * self.kappa_oto_num * self.lapse_num)
+        # compute parameter priors
+        kappa_ver_prior = self.__computeUniformPrior(self.kappa_ver)
+        kappa_hor_prior = self.__computeUniformPrior(self.kappa_hor)
+        tau_prior = self.__computeBetaPrior(1.0 - self.tau, 2.1, 10)
+        kappa_oto_prior = self.__computeUniformPrior(self.kappa_oto)
+        lapse_prior = self.__computeBetaPrior(self.lapse, 2.2, 60)
+
+        # all the combinations of all parameter prior probabilities
+        theta_prior = cartesian([kappa_ver_prior, kappa_hor_prior, tau_prior, kappa_oto_prior, lapse_prior])
+
+        # turn combinations in 1D array of size |param_space| which sums to 1
+        self.prior = np.prod(theta_prior, 1)
+
+
+    # uniform discrete prior
+    def __computeUniformPrior(self, param):
+        return np.ones(len(param)) / len(param)
+
+
+    # beta prior with a and b as shape parameters
+    def __computeBetaPrior(self, param, a, b):
+        # make a copy so that self.*param* is not changed
+        param = np.copy(param)
+
+        # cannot take the beta of 0
+        param[param == 0.0] = 1.0e-10
+
+        # compute beta prior
+        prior = beta.pdf(param, a, b)
+
+        # return normalized prior
+        return prior / np.sum(prior)
 
 
     def computeCartesian(self):
