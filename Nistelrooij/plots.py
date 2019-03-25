@@ -13,9 +13,32 @@ class Plotter:
 
         # plot prob table
         prob_table_plot.plot(genAgent.rods * 180 / np.pi, genAgent.prob_table)
-        prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
         prob_table_plot.set_xlabel('rod [deg]')
         prob_table_plot.set_ylabel('P(right)')
+        prob_table_plot.set_ylim(0.0, 1.0)
+        prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
+
+        # pause to let pyplot draw graph
+        plt.pause(0.0001)
+
+
+    @staticmethod
+    def plotWeights(genAgent):
+        # get weights from generative agent
+        weights = genAgent.calcWeights()
+
+        # initialize weights figure and plot
+        weights_figure = plt.figure()
+        weights_plot = weights_figure.add_subplot(1, 1, 1)
+
+        # plot weights
+        weights_plot.plot(genAgent.frames * 180 / np.pi, weights['prior'], label='prior weight')
+        weights_plot.plot(genAgent.frames * 180 / np.pi, weights['context'], label='visual context weight')
+        weights_plot.set_xlabel('frame [deg]')
+        weights_plot.set_ylabel('weight')
+        weights_plot.set_ylim(0.0, 1.0)
+        weights_plot.set_title('Relative Weights of Prior and Visual Contextual Information')
+        weights_plot.legend()
 
         # pause to let pyplot draw graph
         plt.pause(0.0001)

@@ -53,6 +53,7 @@ stimuli = {'rods': rods, 'frames': frames}
 # initialize generative agent and show rod distribution plot for each frame orientation
 genAgent = GenerativeAgent(params_gen, stimuli)
 Plotter.plotProbTable(genAgent)
+Plotter.plotWeights(genAgent)
 
 # test for adaptive and random stimulus selection
 iterations_num = 500
@@ -74,7 +75,7 @@ for stim_selection in ['adaptive', 'random']:
         # plot updated parameter values based on mean and MAP
         plotter.plotParameterValues(psi)
 
-        # the parameter distributions may be plotted at most once (so comment at least one)
+        # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
         plotter.plotParameterDistributions(psi)

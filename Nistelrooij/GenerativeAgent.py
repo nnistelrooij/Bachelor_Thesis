@@ -3,6 +3,11 @@ from scipy.stats import vonmises
 from scipy.interpolate import splev, splrep
 
 
+# transforms kappa values into sigma values
+def kap2sig(kap):
+    return np.sqrt((3.9945e3 / kap) - 0.0226e3)
+
+
 class GenerativeAgent:
 
     def __init__(self, params, stimuli):
@@ -25,6 +30,7 @@ class GenerativeAgent:
         print 'computing generative distribution\n'
         self.makeProbTable()
 
+
     def makeProbTable(self):
         # the rods I need for the cumulative density function
         theta_rod = np.linspace(-np.pi, np.pi, 10000)
@@ -32,7 +38,38 @@ class GenerativeAgent:
         # make space for look-up table
         self.prob_table = np.zeros([self.rod_num, self.frame_num])
 
+        # the otoliths
+        P_oto = vonmises.pdf(theta_rod, self.kappa_oto)
+
         # compute kappas
+        kappa1, kappa2 = self.__computeKappas()
+
+        # for every frame orientation, calculate frame influence
+        for i in range(self.frame_num):
+            # the context provided by the frame
+            P_frame0 = vonmises.pdf(theta_rod - self.frames[i], kappa1[i])
+            P_frame90 = vonmises.pdf(theta_rod - np.pi/2 - self.frames[i], kappa2[i])
+            P_frame180 = vonmises.pdf(theta_rod - np.pi - self.frames[i], kappa1[i])
+            P_frame270 = vonmises.pdf(theta_rod - np.pi*3/2 - self.frames[i], kappa2[i])
+
+            # add convolved distributions to P_frame
+            P_frame = P_frame0 + P_frame90 + P_frame180 + P_frame270
+
+            # cumulative response distribution per frame
+            cdf = np.cumsum(P_frame * P_oto) / np.sum(P_frame * P_oto)
+
+            # reduce cdf to |rods| using spline interpolation
+            cdf_continuous = splrep(theta_rod, cdf, s=0)
+            cdf = splev(self.rods, cdf_continuous, der=0)
+
+            # add lapse probability to distribution
+            PCW = self.lapse + (1 - 2 * self.lapse) * cdf
+
+            # add probabilities to look-up table
+            self.prob_table[:, i] = PCW
+
+
+    def __computeKappas(self):
         kappa1 = self.kappa_ver -\
                  (1 - np.cos(np.abs(2 * self.frames))) *\
                  self.tau *\
@@ -42,34 +79,8 @@ class GenerativeAgent:
                  (1 - self.tau) *\
                  (self.kappa_ver - self.kappa_hor)
 
-        # for every frame orientation, calculate frame influence
-        for j in range(self.frame_num):
-            # the context provided by the frame
-            P_frame0 = vonmises.pdf(theta_rod - self.frames[j], kappa1[j])
-            P_frame90 = vonmises.pdf(theta_rod - np.pi/2 - self.frames[j], kappa2[j])
-            P_frame180 = vonmises.pdf(theta_rod - np.pi - self.frames[j], kappa1[j])
-            P_frame270 = vonmises.pdf(theta_rod - np.pi*3/2 - self.frames[j], kappa2[j])
+        return kappa1, kappa2
 
-            # add convolved distributions to P_frame
-            P_frame = P_frame0 + P_frame90 + P_frame180 + P_frame270
-
-            # the otoliths
-            P_oto = vonmises.pdf(theta_rod, self.kappa_oto)
-
-            # cumulative response distribution per frame
-            cdf = np.cumsum(P_frame * P_oto) / np.sum(P_frame * P_oto)
-
-            # use spline interpolation to get a continuous cdf
-            cdf_continuous = splrep(theta_rod, cdf, s=0)
-
-            # select cumulative probs of rods in self.rods from continuous cdf
-            cdf = splev(self.rods, cdf_continuous, der=0)
-
-            # add lapse probability to distribution
-            PCW = self.lapse + (1 - 2 * self.lapse) * cdf
-
-            # add probabilities to look-up table
-            self.prob_table[:, j] = PCW
 
     # determine the response of agent on particular rod and frame combination
     def getResponse(self, stim_rod, stim_frame):
@@ -82,3 +93,19 @@ class GenerativeAgent:
 
         # determine response
         return np.random.binomial(1, PCW)
+
+
+    # calculate prior and visual context weights
+    def calcWeights(self):
+        # compute prior variance
+        prior_variance = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
+
+        # compute visual context variance for each frame orientation
+        kappa1, _ = self.__computeKappas()
+        context_variance = kap2sig(kappa1)
+
+        # compute weights with equation given in Alberts et al. (2018), displayed in Alberts et al. (2017)
+        weights = {'prior': (1 / prior_variance) / ((1 / prior_variance) + (1 / context_variance)),
+                   'context': (1 / context_variance) / ((1 / prior_variance) + (1 / context_variance))}
+
+        return weights
