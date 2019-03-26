@@ -167,7 +167,7 @@ class PSI_RiF:
         param = np.copy(param)
 
         # cannot take the beta of 0
-        param[param == 0.0] = 1.0e-10
+        param[param == 0.0] = 1.0e-3
 
         # compute beta prior
         prior = beta.pdf(param, a, b)
