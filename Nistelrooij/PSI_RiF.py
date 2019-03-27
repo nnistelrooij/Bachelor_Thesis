@@ -296,3 +296,18 @@ class PSI_RiF:
 
         return param_distributions_dict
 
+
+    def calcParemeterProbabilities(self, data):
+        probs = np.zeros([self.prior.size, 1])
+
+        for (rod, frame, response) in data:
+            # find index of stimulus
+            idx_rod = np.where(self.rods == rod)[0]
+            idx_frame = np.where(self.frames == frame)[0]
+
+            if response == 0:
+                probs += (1.0 - self.lookup[:, idx_rod, idx_frame]) / np.sum(1.0 - self.lookup[:, idx_rod, idx_frame])
+            elif response == 1:
+                probs += self.lookup[:, idx_rod, idx_frame] / np.sum(self.lookup[:, idx_rod, idx_frame])
+
+        return probs
