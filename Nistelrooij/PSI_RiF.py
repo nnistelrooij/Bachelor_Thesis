@@ -310,4 +310,6 @@ class PSI_RiF:
             elif response == 1:
                 probs += self.lookup[:, idx_rod, idx_frame] / np.sum(self.lookup[:, idx_rod, idx_frame])
 
+        wolla = probs.reshape([self.kappa_ver_num, self.kappa_hor_num]) / np.sum(probs)
+
         return probs

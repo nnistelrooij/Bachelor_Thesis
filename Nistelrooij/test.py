@@ -14,15 +14,15 @@ def sig2kap(sig):  # in degrees
 
 
 kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
-# kappa_ver = [sig2kap(4.9)]
+# kappa_ver = [sig2kap(4.3)]
 kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
-# kappa_hor = [sig2kap(52.0)]
+# kappa_hor = [sig2kap(37)]
 # tau = np.linspace(0.6, 1.0, 25)
 tau = np.array([0.8])
 # kappa_oto = np.linspace(sig2kap(1.4), sig2kap(3.0), 8)
 kappa_oto = [sig2kap(2.2)]
 # lapse = np.linspace(0.0, 0.1, 8)
-lapse = [0.02]
+lapse = [0.0]
 
 params = {'kappa_ver': kappa_ver,
           'kappa_hor': kappa_hor,
@@ -31,11 +31,11 @@ params = {'kappa_ver': kappa_ver,
           'lapse': lapse}
 
 
-kappa_ver_gen = sig2kap(2.3)
-kappa_hor_gen = sig2kap(28)
+kappa_ver_gen = sig2kap(4.3)
+kappa_hor_gen = sig2kap(37)
 tau_gen = 0.8
 kappa_oto_gen = sig2kap(2.2)
-lapse_gen = 0.02
+lapse_gen = 0.0
 
 params_gen = {'kappa_ver': kappa_ver_gen,
               'kappa_hor': kappa_hor_gen,
