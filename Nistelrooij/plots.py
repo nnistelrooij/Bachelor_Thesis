@@ -8,7 +8,7 @@ class Plotter:
     @staticmethod
     def plotProbTable(genAgent):
         # initialize prob table figure and plot
-        prob_table_figure = plt.figure()
+        prob_table_figure = plt.figure(figsize=(8, 6))
         prob_table_plot = prob_table_figure.add_subplot(1, 1, 1)
 
         # plot prob table
@@ -28,7 +28,7 @@ class Plotter:
         weights = genAgent.calcWeights()
 
         # initialize weights figure and plot
-        weights_figure = plt.figure()
+        weights_figure = plt.figure(figsize=(8, 6))
         weights_plot = weights_figure.add_subplot(1, 1, 1)
 
         # plot weights
@@ -65,7 +65,7 @@ class Plotter:
 
     def initStimuliFigure(self):
         # initialize selected stimuli plot
-        selected_stimuli_figure = plt.figure()
+        selected_stimuli_figure = plt.figure(figsize=(8, 6))
         self.selected_stimuli_plot = selected_stimuli_figure.add_subplot(1, 1, 1)
 
         # initialize selected stimuli
@@ -102,7 +102,7 @@ class Plotter:
             plot.set_xlim(0, self.iterations_num)
             plot.set_ylim(self.stim_min, self.stim_max)
             plot.set_title('Selected Stimuli for Each Trial')
-            plot.legend(title='Legend')
+            plot.legend()
 
             # pause to let pyplot draw plot
             plt.pause(0.0001)
@@ -142,7 +142,7 @@ class Plotter:
 
             # add a single legend to the figure
             handles, labels = self.param_values_plots[self.params.keys()[0]].get_legend_handles_labels()
-            self.param_values_figure.legend(handles, labels, loc='upper right', title='Legend')
+            self.param_values_figure.legend(handles, labels, loc='upper right')
 
             # fit all the plots to the screen with no overlapping text
             plt.tight_layout()
@@ -200,7 +200,7 @@ class Plotter:
 
             # add a single legend to the figure
             handles, labels = self.param_distributions_plots[self.params.keys()[0]].get_legend_handles_labels()
-            self.param_distributions_figure.legend(handles, labels, loc='upper right', title='Legend')
+            self.param_distributions_figure.legend(handles, labels, loc='upper right')
 
             # fit all the plots to the screen with no overlapping text
             plt.tight_layout()
@@ -256,7 +256,57 @@ class Plotter:
         plot.set_title('%s Distribution for Each Trial' % param)
 
         # I get an error when I do not use these four lines
+        surface_gen._facecolors2d = surface_gen._facecolors3d
+        surface_gen._edgecolors2d = surface_gen._facecolors3d
         surface._facecolors2d = surface._facecolors3d
         surface._edgecolors2d = surface._facecolors3d
-        surface_gen._facecolors2d = surface._facecolors3d
-        surface_gen._edgecolors2d = surface._facecolors3d
+
+
+    def plotNegLogLikelihood(self, genAgent, psi, param1, param2, response_num=500):
+        # get data from generative agent
+        responses = genAgent.getResponses(response_num)
+
+        # get negative log likelihood from psi object given the data
+        neg_log_likelihood = psi.calcNegLogLikelihood(responses)
+        neg_log_likelihood = neg_log_likelihood.reshape([len(self.params[param1]), len(self.params[param2])])
+
+        # initialize negative log likelihood figure and plot
+        neg_log_likelihood_figure = plt.figure(figsize=(8, 6))
+        neg_log_likelihood_plot = neg_log_likelihood_figure.add_subplot(1, 1, 1, projection='3d')
+
+        # plot negative log likelihood
+        self.__plotNegLogLikelihood(param1, param2, neg_log_likelihood, neg_log_likelihood_plot)
+
+        # add legend
+        handles, labels = neg_log_likelihood_plot.get_legend_handles_labels()
+        neg_log_likelihood_figure.legend(handles, labels, loc='upper right')
+
+        # pause to let pyplot draw graphs
+        plt.pause(0.0001)
+
+
+    def __plotNegLogLikelihood(self, param1, param2, neg_log_likelihood, plot):
+        # make data for generative parameter values line
+        X_gen = [self.params_gen[param1], self.params_gen[param1]]
+        Y_gen = [self.params_gen[param2], self.params_gen[param2]]
+        Z_gen = [np.amin(neg_log_likelihood), np.amax(neg_log_likelihood)]
+
+        # plot generative parameter values line
+        plot.plot(X_gen, Y_gen, Z_gen, label='generative parameter value')
+
+        # make data for negative log likelihood surface
+        X, Y = np.meshgrid(self.params[param1], self.params[param2])
+        Z = neg_log_likelihood
+
+        # plot negative log likelihood surface
+        surface = plot.plot_surface(X, Y, Z, label='negative log likelihood')
+
+        # set the other plot settings
+        plot.set_xlabel(param1)
+        plot.set_ylabel(param2)
+        plot.set_zlabel(('-sum(log(P(responses|%s, %s)))' % (param1, param2)))
+        plot.set_title('Negative Log Likelihood of %s and %s' % (param1, param2))
+
+        # I get an error when I do not do these two lines
+        surface._facecolors2d = surface._facecolors3d
+        surface._edgecolors2d = surface._facecolors3d

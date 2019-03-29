@@ -13,9 +13,9 @@ def sig2kap(sig):  # in degrees
     return 3.9945e3 / (sig2 + 0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
+kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 25)
 # kappa_ver = [sig2kap(4.3)]
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
+kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 25)
 # kappa_hor = [sig2kap(37)]
 # tau = np.linspace(0.6, 1.0, 25)
 tau = np.array([0.8])
@@ -52,25 +52,8 @@ stimuli = {'rods': rods, 'frames': frames}
 
 # initialize generative agent and show rod distribution plot for each frame orientation
 genAgent = GenerativeAgent(params_gen, stimuli)
-
-psi = PSI_RiF(params, stimuli)
-
-data = []
-
-for rod in rods:
-    for frame in frames:
-        for _ in range(50):
-            response = genAgent.getResponse(rod, frame)
-
-            data.append((rod, frame, response))
-
-psi.calcParemeterProbabilities(data)
-
-
-
-
-# Plotter.plotProbTable(genAgent)
-# Plotter.plotWeights(genAgent)
+Plotter.plotProbTable(genAgent)
+Plotter.plotWeights(genAgent)
 
 # test for adaptive and random stimulus selection
 iterations_num = 500
@@ -81,21 +64,24 @@ for stim_selection in ['adaptive', 'random']:
     # initialize plotter object
     plotter = Plotter(iterations_num, params, params_gen, stimuli)
 
+    # plot negative log likelihood of combinations of kappa_ver and kappa_hor
+    plotter.plotNegLogLikelihood(genAgent, psi, 'kappa_ver', 'kappa_hor')
+
     # run model for given number of iterations
     print 'inferring model'
 
     responses = []
     for _ in trange(iterations_num):
         # plot selected stimuli
-        # plotter.plotStimuli(psi)
+        plotter.plotStimuli(psi)
 
         # plot updated parameter values based on mean and MAP
-        # plotter.plotParameterValues(psi)
+        plotter.plotParameterValues(psi)
 
         # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
-        # plotter.plotParameterDistributions(psi)
+        plotter.plotParameterDistributions(psi)
 
         # plot parameter distributions of each trial as surfaces
         plotter.plotParameterDistributions(psi, '3d')
