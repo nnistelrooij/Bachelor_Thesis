@@ -294,7 +294,7 @@ class Plotter:
         plot.contourf(self.params[param1], self.params[param2], neg_log_likelihood)
         plot.set_xlabel(param1)
         plot.set_ylabel(param2)
-        plot.set_title('Negative log likelihood of %s and %s' % (param1, param2))
+        plot.set_title('Negative Log Likelihood of %s and %s' % (param1, param2))
 
 
     def __plotNegLogLikelihood3D(self, param1, param2, neg_log_likelihood, plot):

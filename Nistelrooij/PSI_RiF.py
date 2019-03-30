@@ -298,17 +298,11 @@ class PSI_RiF:
 
 
     def calcNegLogLikelihood(self, data):
-        # for every combination of the parameters, rod and frame: replace right responses in data by the
-        # probability of a right response given the parameters, rod and frame
-        probs_right_responses = np.einsum('ijk,jkl->ijkl', self.lookup, data)
-        # for every combination of the parameters, rods and frames: replace left responses in data by the
-        # probability of a left response given the parameters, rod and frame
-        probs_left_responses = np.einsum('ijk,jkl->ijkl', 1.0 - self.lookup, 1.0 - data)
+        # compute negative log likelihood for all right, respectively left responses
+        neg_log_likelihood_right_responses = np.einsum('ijk,jkl->i', -np.log(self.lookup), data)
+        neg_log_likelihood_left_responses = np.einsum('ijk,jkl->i', -np.log(1.0 - self.lookup), 1.0 - data)
 
-        # all responses in data are replaced by the corresponding response probability given the parameters, rod and frame
-        probs_responses = probs_right_responses + probs_left_responses
-
-        # compute negative log likelihood over the parameters
-        neg_log_likelihood = -np.sum(np.log(probs_responses), (1, 2, 3))
+        # compute negative log likelihood for all responses
+        neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
 
         return neg_log_likelihood
