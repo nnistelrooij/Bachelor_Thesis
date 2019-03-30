@@ -64,8 +64,11 @@ for stim_selection in ['adaptive', 'random']:
     # initialize plotter object
     plotter = Plotter(iterations_num, params, params_gen, stimuli)
 
-    # plot negative log likelihood of combinations of kappa_ver and kappa_hor
+    # plot contour plot of negative log likelihood of combinations of kappa_ver and kappa_hor
     plotter.plotNegLogLikelihood(genAgent, psi, 'kappa_ver', 'kappa_hor')
+
+    # plot 3D surface of negative log likelihood of combinations of kappa_ver and kappa_hor
+    plotter.plotNegLogLikelihood(genAgent, psi, 'kappa_ver', 'kappa_hor', '3d')
 
     # run model for given number of iterations
     print 'inferring model'
