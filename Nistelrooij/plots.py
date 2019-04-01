@@ -257,18 +257,25 @@ class Plotter:
         surface._edgecolors2d = surface._facecolors3d
 
 
-    def initNegLogLikelihoodFigure(self, param1, param2, projection):
+    def initNegLogLikelihoodFigure(self, projection):
         # initialize negative log likelihood figure and plot
         self.neg_log_likelihood_figure = plt.figure(figsize=(8, 6))
         self.neg_log_likelihood_plot = self.neg_log_likelihood_figure.add_subplot(1, 1, 1, projection=projection)
 
+        # initialize the two free parameters, self.free_param1 and self.free_param2
+        free_params = [param for param in self.params.keys() if len(self.params[param]) > 1]
+        if len(free_params) == 2:
+            self.free_param1, self.free_param2 = free_params
+        else:
+            raise Exception, 'model must have exactly two free parameters'
+
         # initialize negative log likelihood array
-        self.neg_log_likelihood = np.zeros([len(self.params[param1]), len(self.params[param2])])
+        self.neg_log_likelihood = np.zeros([len(self.params[self.free_param1]), len(self.params[self.free_param2])])
 
 
-    def plotNegLogLikelihood(self, param1, param2, projection=None, response_num=500):
+    def plotNegLogLikelihood(self, projection=None, response_num=500):
         if self.neg_log_likelihood is None:
-            self.initNegLogLikelihoodFigure(param1, param2, projection)
+            self.initNegLogLikelihoodFigure(projection)
 
         if response_num == 1:
             # data is latest response from generative agent
@@ -285,29 +292,29 @@ class Plotter:
         if self.trial_num == 1 or (self.trial_num % self.plot_period) == 0:
             # plot negative log likelihood using the specified projection
             if projection == '3d':
-                self.__plotNegLogLikelihood3D(param1, param2)
+                self.__plotNegLogLikelihood3D()
             else:
-                self.__plotNegLogLikelihood(param1, param2)
+                self.__plotNegLogLikelihood()
 
             # add legend
             handles, labels = self.neg_log_likelihood_plot.get_legend_handles_labels()
             self.neg_log_likelihood_figure.legend(handles, labels, loc='upper right')
 
 
-    def __plotNegLogLikelihood(self, param1, param2):
+    def __plotNegLogLikelihood(self):
         # shorter name
         plot = self.neg_log_likelihood_plot
 
         # plot generative parameter values as a point and the negative log likelihood as a contour plot
         plot.clear()
-        plot.plot(self.params_gen [param1], self.params_gen[param2], marker='o', label='generative parameter values')
-        plot.contourf(self.params[param1], self.params[param2], self.neg_log_likelihood)
-        plot.set_xlabel(param1)
-        plot.set_ylabel(param2)
-        plot.set_title('Negative Log Likelihood of %s and %s for Trial %d' % (param1, param2, self.trial_num))
+        plot.plot(self.params_gen[self.free_param1], self.params_gen[self.free_param2], marker='o', label='generative parameter values')
+        plot.contourf(self.params[self.free_param1], self.params[self.free_param2], self.neg_log_likelihood)
+        plot.set_xlabel(self.free_param1)
+        plot.set_ylabel(self.free_param2)
+        plot.set_title('Negative Log Likelihood of %s and %s for Trial %d' % (self.free_param1, self.free_param2, self.trial_num))
 
 
-    def __plotNegLogLikelihood3D(self, param1, param2):
+    def __plotNegLogLikelihood3D(self):
         # shorter name
         plot = self.neg_log_likelihood_plot
 
@@ -315,25 +322,25 @@ class Plotter:
         plot.clear()
 
         # make data for generative parameter values line
-        X_gen = [self.params_gen[param1], self.params_gen[param1]]
-        Y_gen = [self.params_gen[param2], self.params_gen[param2]]
+        X_gen = [self.params_gen[self.free_param1], self.params_gen[self.free_param1]]
+        Y_gen = [self.params_gen[self.free_param2], self.params_gen[self.free_param2]]
         Z_gen = [np.amin(self.neg_log_likelihood), np.amax(self.neg_log_likelihood)]
 
         # plot generative parameter values line
         plot.plot(X_gen, Y_gen, Z_gen, label='generative parameter values')
 
         # make data for negative log likelihood surface
-        X, Y = np.meshgrid(self.params[param1], self.params[param2])
+        X, Y = np.meshgrid(self.params[self.free_param1], self.params[self.free_param2])
         Z = self.neg_log_likelihood
 
         # plot negative log likelihood surface
         surface = plot.plot_surface(X, Y, Z, label='negative log likelihood')
 
         # set the other plot settings
-        plot.set_xlabel(param1)
-        plot.set_ylabel(param2)
-        plot.set_zlabel(('-sum(log(P(responses|%s, %s)))' % (param1, param2)))
-        plot.set_title('Negative Log Likelihood of %s and %s for Trial %d' % (param1, param2, self.trial_num))
+        plot.set_xlabel(self.free_param1)
+        plot.set_ylabel(self.free_param2)
+        plot.set_zlabel(('-sum(log(P(responses|%s, %s)))' % (self.free_param1, self.free_param2)))
+        plot.set_title('Negative Log Likelihood of %s and %s for Trial %d' % (self.free_param1, self.free_param2, self.trial_num))
 
         # I get an error when I do not do these two lines
         surface._facecolors2d = surface._facecolors3d

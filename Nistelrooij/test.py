@@ -63,7 +63,7 @@ iterations_num = 500
 plotter = Plotter(iterations_num, params, params_gen, stimuli, genAgent, psi)
 plotter.plotGenProbTable()
 plotter.plotGenWeights()
-plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor')
+plotter.plotNegLogLikelihood()
 plotter.plot()
 
 for stim_selection in ['adaptive', 'random']:
@@ -78,6 +78,13 @@ for stim_selection in ['adaptive', 'random']:
 
     responses = []
     for _ in trange(iterations_num):
+        # get stimulus from psi object
+        rod, frame = psi.stim
+
+        # get response from the generative model
+        response = genAgent.getResponse(rod, frame)
+
+
         # plot selected stimuli
         plotter.plotStimuli()
 
@@ -90,29 +97,22 @@ for stim_selection in ['adaptive', 'random']:
         plotter.plotParameterDistributions()
 
         # plot parameter distributions of each trial as surfaces
-        # plotter.plotParameterDistributions('3d')
-
-
-        # get stimulus from psi object
-        rod, frame = psi.stim
-
-        # get response from the generative model
-        response = genAgent.getResponse(rod, frame)
-
-        # add data to psi object
-        psi.addData(response)
-
+        # plotter.plotParameterDistributions(projection='3d')
 
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor', response_num=1)
+        plotter.plotNegLogLikelihood(response_num=1)
 
         # plot negative log likelihood of responses thus far as a surface
-        # plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor', projection='3d', response_num=1)
+        # plotter.plotNegLogLikelihood(projection='3d', response_num=1)
 
         # actually plot all the figures
         plotter.plot()
+
+
+        # add data to psi object
+        psi.addData(response)
 
     # print results
     print 'Parameters of generative model'
