@@ -86,7 +86,7 @@ class GenerativeAgent:
 
 
     # determine response_num responses of the generative agent on a given rod and frame orientation
-    def getResponse(self, stim_rod, stim_frame, response_num=1):
+    def getResponse(self, stim_rod, stim_frame, responses_num=1):
         # find index of stimulus
         idx_rod = np.where(self.rods == stim_rod)[0]
         idx_frame = np.where(self.frames == stim_frame)[0]
@@ -95,7 +95,7 @@ class GenerativeAgent:
         PCW = self.prob_table[idx_rod, idx_frame][0]
 
         # determine responses
-        responses = np.random.binomial(1, PCW, response_num)
+        responses = np.random.binomial(1, PCW, responses_num)
 
         # save last response
         self.lastResponse = responses[-1]
@@ -104,14 +104,14 @@ class GenerativeAgent:
 
 
     # determine response_num responses for each rod-frame pair
-    def getAllResponses(self, response_num):
+    def getAllResponses(self, responses_num):
         # initialize responses array
-        responses = np.empty([self.rod_num, self.frame_num, response_num])
+        responses = np.empty([self.rod_num, self.frame_num, responses_num])
 
         # determine response_num responses for each given rod and frame
         for i in range(self.rod_num):
             for j in range(self.frame_num):
-                responses[i, j] = self.getResponse(self.rods[i], self.frames[j], response_num)
+                responses[i, j] = self.getResponse(self.rods[i], self.frames[j], responses_num)
 
         return responses
 

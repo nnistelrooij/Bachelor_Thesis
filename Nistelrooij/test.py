@@ -63,7 +63,7 @@ iterations_num = 500
 plotter = Plotter(iterations_num, params, params_gen, stimuli, genAgent, psi)
 plotter.plotGenProbTable()
 plotter.plotGenWeights()
-plotter.plotNegLogLikelihood()
+plotter.plotNegLogLikelihood(responses_num=500)
 plotter.plot()
 
 for stim_selection in ['adaptive', 'random']:
@@ -102,10 +102,10 @@ for stim_selection in ['adaptive', 'random']:
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        plotter.plotNegLogLikelihood(response_num=1)
+        plotter.plotNegLogLikelihood()
 
         # plot negative log likelihood of responses thus far as a surface
-        # plotter.plotNegLogLikelihood(projection='3d', response_num=1)
+        # plotter.plotNegLogLikelihood(projection='3d')
 
         # actually plot all the figures
         plotter.plot()

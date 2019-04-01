@@ -71,7 +71,7 @@ class PSI_RiF:
                       self.rod_num, self.frame_num])
 
         # initialize otolith distributions before for-loops
-        P_oto = [self.__calcPOto(self.kappa_oto[i], theta_rod) for i in range(self.kappa_oto_num)]
+        P_oto = [self.__calcPOto(kappa_oto, theta_rod) for kappa_oto in self.kappa_oto]
 
         for i in trange(self.kappa_ver_num):
             for j in range(self.kappa_hor_num):
