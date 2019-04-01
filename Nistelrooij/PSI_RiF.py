@@ -13,7 +13,7 @@ from sklearn.utils.extmath import cartesian
 from tqdm import trange
 
 
-# Create parameter space and initialize prior and likelihood
+# Create parameter space and initialize prior, likelihood and stimulus
 class PSI_RiF:
 
     def __init__(self, params, stimuli, stim_selection='adaptive'):
@@ -39,20 +39,25 @@ class PSI_RiF:
         self.rod_num = len(self.rods)
         self.frame_num = len(self.frames)
 
-        # set stimulus selection mode
-        self.stim_selection = stim_selection
-
         # pre-compute likelihood and parameter prior
         print 'computing likelihood'
         self.computeLikelihood()
-        print 'computing prior'
-        self.computePrior()
 
         # compute easier-to-use parameter data-structure
         print "computing parameter values cartesian product"
         self.computeCartesian()
 
-        # calculate best next stimulus with lowest entropy
+        # reset psi object to initial values
+        self.reset(stim_selection)
+
+
+    def reset(self, stim_selection):
+        # compute initial prior
+        print 'computing prior'
+        self.computePrior()
+
+        # calculate best next stimulus with lowest entropy or a random stimulus based on self.stim_selection
+        self.stim_selection = stim_selection
         self.calcNextStim()
 
 
@@ -298,19 +303,20 @@ class PSI_RiF:
 
 
     def calcNegLogLikelihood(self, data):
-        # compute negative log likelihood for all right, respectively left responses
-        neg_log_likelihood_right_responses = np.einsum('ijk,jkl->i', -np.log(self.lookup), data)
-        neg_log_likelihood_left_responses = np.einsum('ijk,jkl->i', -np.log(1.0 - self.lookup), 1.0 - data)
+        if isinstance(data, np.ndarray):
+            # compute negative log likelihood for all right, respectively left responses
+            neg_log_likelihood_right_responses = np.einsum('ijk,jkl->i', -np.log(self.lookup), data)
+            neg_log_likelihood_left_responses = np.einsum('ijk,jkl->i', -np.log(1.0 - self.lookup), 1.0 - data)
 
-        # compute negative log likelihood for all responses
-        neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
+            # compute negative log likelihood for all responses
+            neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
 
-        return neg_log_likelihood
-
-
-    def reset(self):
-        # compute initial prior
-        self.computePrior()
-
-        # calculate next stimulus based on initial prior
-        self.calcNextStim()
+            return neg_log_likelihood
+        else:
+            # compute negative log likelihood for one response
+            if data == 1:
+                return -np.log(self.lookup[:, self.stim1_index, self.stim2_index])
+            elif data == 0:
+                return -np.log(1.0 - self.lookup[:, self.stim1_index, self.stim2_index])
+            else:
+                raise Exception, 'response is ' + data + ', but must be 1 or 0'

@@ -26,6 +26,9 @@ class GenerativeAgent:
         self.rod_num = len(self.rods)
         self.frame_num = len(self.frames)
 
+        # initialize last response
+        self.lastResponse = -1
+
         # pre-compute likelihood table
         print 'computing generative distribution\n'
         self.makeProbTable()
@@ -88,15 +91,20 @@ class GenerativeAgent:
         idx_rod = np.where(self.rods == stim_rod)[0]
         idx_frame = np.where(self.frames == stim_frame)[0]
 
-        # lookup probability of responding clockwise
+        # look up probability of responding clockwise
         PCW = self.prob_table[idx_rod, idx_frame][0]
 
-        # determine response
-        return np.random.binomial(1, PCW, response_num)
+        # determine responses
+        responses = np.random.binomial(1, PCW, response_num)
+
+        # save last response
+        self.lastResponse = responses[-1]
+
+        return responses
 
 
     # determine response_num responses for each rod-frame pair
-    def getResponses(self, response_num):
+    def getAllResponses(self, response_num):
         # initialize responses array
         responses = np.empty([self.rod_num, self.frame_num, response_num])
 

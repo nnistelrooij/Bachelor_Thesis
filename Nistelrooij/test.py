@@ -13,9 +13,9 @@ def sig2kap(sig):  # in degrees
     return 3.9945e3 / (sig2 + 0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
+kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 25)
 # kappa_ver = [sig2kap(4.3)]
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
+kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 25)
 # kappa_hor = [sig2kap(37)]
 # tau = np.linspace(0.6, 1.0, 25)
 tau = np.array([0.8])
@@ -68,8 +68,7 @@ plotter.plot()
 
 for stim_selection in ['adaptive', 'random']:
     # set stimulus selection mode and reset psi object to initial values
-    psi.stim_selection = stim_selection
-    psi.reset()
+    psi.reset(stim_selection)
 
     # reset plotter to plot new figures
     plotter.reset()
@@ -93,9 +92,6 @@ for stim_selection in ['adaptive', 'random']:
         # plot parameter distributions of each trial as surfaces
         # plotter.plotParameterDistributions('3d')
 
-        # actually plot all the figures
-        plotter.plot()
-
 
         # get stimulus from psi object
         rod, frame = psi.stim
@@ -105,6 +101,18 @@ for stim_selection in ['adaptive', 'random']:
 
         # add data to psi object
         psi.addData(response)
+
+
+        # the negative log likelihood may be plotted at most once (so comment out at least one)
+
+        # plot negative log likelihood of responses thus far as a contour plot
+        plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor', response_num=1)
+
+        # plot negative log likelihood of responses thus far as a surface
+        # plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor', projection='3d', response_num=1)
+
+        # actually plot all the figures
+        plotter.plot()
 
     # print results
     print 'Parameters of generative model'
