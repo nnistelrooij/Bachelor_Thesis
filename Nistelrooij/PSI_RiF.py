@@ -306,3 +306,11 @@ class PSI_RiF:
         neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
 
         return neg_log_likelihood
+
+
+    def reset(self):
+        # compute initial prior
+        self.computePrior()
+
+        # calculate next stimulus based on initial prior
+        self.calcNextStim()

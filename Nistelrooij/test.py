@@ -13,9 +13,9 @@ def sig2kap(sig):  # in degrees
     return 3.9945e3 / (sig2 + 0.0226e3)
 
 
-kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 25)
+kappa_ver = np.linspace(sig2kap(2.3), sig2kap(7.4), 8)
 # kappa_ver = [sig2kap(4.3)]
-kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 25)
+kappa_hor = np.linspace(sig2kap(28), sig2kap(76), 8)
 # kappa_hor = [sig2kap(37)]
 # tau = np.linspace(0.6, 1.0, 25)
 tau = np.array([0.8])
@@ -50,44 +50,51 @@ frames = np.linspace(-45, 40, 18) * np.pi / 180
 stimuli = {'rods': rods, 'frames': frames}
 
 
-# initialize generative agent and show rod distribution plot for each frame orientation
+# initialize generative agent
 genAgent = GenerativeAgent(params_gen, stimuli)
-Plotter.plotProbTable(genAgent)
-Plotter.plotWeights(genAgent)
 
-# test for adaptive and random stimulus selection
+# initialize psi object
+psi = PSI_RiF(params, stimuli)
+
+# number of iterations of the experiment
 iterations_num = 500
+
+# initialize plotter and plot generative distribution, generative weights and the negative log likelihood
+plotter = Plotter(iterations_num, params, params_gen, stimuli, genAgent, psi)
+plotter.plotGenProbTable()
+plotter.plotGenWeights()
+plotter.plotNegLogLikelihood('kappa_ver', 'kappa_hor')
+plotter.plot()
+
 for stim_selection in ['adaptive', 'random']:
-    # initialize psi object
-    psi = PSI_RiF(params, stimuli, stim_selection)
+    # set stimulus selection mode and reset psi object to initial values
+    psi.stim_selection = stim_selection
+    psi.reset()
 
-    # initialize plotter object
-    plotter = Plotter(iterations_num, params, params_gen, stimuli)
-
-    # plot contour plot of negative log likelihood of combinations of kappa_ver and kappa_hor
-    plotter.plotNegLogLikelihood(genAgent, psi, 'kappa_ver', 'kappa_hor')
-
-    # plot 3D surface of negative log likelihood of combinations of kappa_ver and kappa_hor
-    plotter.plotNegLogLikelihood(genAgent, psi, 'kappa_ver', 'kappa_hor', '3d')
+    # reset plotter to plot new figures
+    plotter.reset()
 
     # run model for given number of iterations
-    print 'inferring model'
+    print 'inferring model ' + stim_selection + 'ly'
 
     responses = []
     for _ in trange(iterations_num):
         # plot selected stimuli
-        plotter.plotStimuli(psi)
+        plotter.plotStimuli()
 
         # plot updated parameter values based on mean and MAP
-        plotter.plotParameterValues(psi)
+        plotter.plotParameterValues()
 
         # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
-        plotter.plotParameterDistributions(psi)
+        plotter.plotParameterDistributions()
 
         # plot parameter distributions of each trial as surfaces
-        plotter.plotParameterDistributions(psi, '3d')
+        # plotter.plotParameterDistributions('3d')
+
+        # actually plot all the figures
+        plotter.plot()
 
 
         # get stimulus from psi object
@@ -99,9 +106,6 @@ for stim_selection in ['adaptive', 'random']:
         # add data to psi object
         psi.addData(response)
 
-        # bookkeeping
-        responses.append(response)
-
     # print results
     print 'Parameters of generative model'
     print params_gen
@@ -109,8 +113,6 @@ for stim_selection in ['adaptive', 'random']:
     print psi.calcParameterValues('MAP')
     print 'Expected parameter values'
     print psi.calcParameterValues('mean')
-    print 'First 50 responses'
-    print responses[:50], '\n'
 
 # do not close plots when program finishes
 plt.show()

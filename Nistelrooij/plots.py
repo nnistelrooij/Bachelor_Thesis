@@ -4,52 +4,16 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 
 class Plotter:
-
-    @staticmethod
-    def plotProbTable(genAgent):
-        # initialize prob table figure and plot
-        prob_table_figure = plt.figure(figsize=(8, 6))
-        prob_table_plot = prob_table_figure.add_subplot(1, 1, 1)
-
-        # plot prob table
-        prob_table_plot.plot(genAgent.rods * 180 / np.pi, genAgent.prob_table)
-        prob_table_plot.set_xlabel('rod [deg]')
-        prob_table_plot.set_ylabel('P(right)')
-        prob_table_plot.set_ylim(0.0, 1.0)
-        prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
-
-        # pause to let pyplot draw graph
-        plt.pause(0.0001)
-
-
-    @staticmethod
-    def plotWeights(genAgent):
-        # get weights from generative agent
-        weights = genAgent.calcWeights()
-
-        # initialize weights figure and plot
-        weights_figure = plt.figure(figsize=(8, 6))
-        weights_plot = weights_figure.add_subplot(1, 1, 1)
-
-        # plot weights
-        weights_plot.plot(genAgent.frames * 180 / np.pi, weights['prior'], label='prior weight')
-        weights_plot.plot(genAgent.frames * 180 / np.pi, weights['context'], label='visual context weight')
-        weights_plot.set_xlabel('frame [deg]')
-        weights_plot.set_ylabel('weight')
-        weights_plot.set_ylim(0.0, 1.0)
-        weights_plot.set_title('Relative Weights of Prior and Visual Contextual Information')
-        weights_plot.legend()
-
-        # pause to let pyplot draw graph
-        plt.pause(0.0001)
-
-
-    def __init__(self, iterations_num, params, params_gen, stimuli, plot_period=25, point_size=5):
+    def __init__(self, iterations_num, params, params_gen, stimuli, genAgent, psi, plot_period=25, point_size=5):
         # set the members of the Plotter object
         self.iterations_num = iterations_num
         self.params = params
         self.params_gen = params_gen
         self.stimuli = stimuli
+
+        # save generative agent and psi object in Plotter object
+        self.genAgent = genAgent
+        self.psi = psi
 
         # number of trials before figure(s) is/are plotted again
         self.plot_period = plot_period
@@ -57,10 +21,58 @@ class Plotter:
         # size of points in parameter values and selected stimuli figures
         self.point_size = point_size
 
+        # reset plotter to draw new figures
+        self.reset()
+
+
+    def reset(self):
         # initialize selected stimuli and params values and distributions as Nones
         self.selected_stimuli = None
         self.param_values = None
         self.param_distributions = None
+
+        # reset current trial number
+        self.trial_num = 1
+
+
+    def plot(self):
+        if self.trial_num == 1 or (self.trial_num % self.plot_period) == 0:
+            # pause to let pyplot draw graph
+            plt.pause(0.0001)
+
+        # increase current trial number
+        self.trial_num += 1
+
+
+    def plotGenProbTable(self):
+        # initialize prob table figure and plot
+        prob_table_figure = plt.figure(figsize=(8, 6))
+        prob_table_plot = prob_table_figure.add_subplot(1, 1, 1)
+
+        # plot prob table
+        prob_table_plot.plot(self.stimuli['rods'] * 180 / np.pi, self.genAgent.prob_table)
+        prob_table_plot.set_xlabel('rod [deg]')
+        prob_table_plot.set_ylabel('P(right)')
+        prob_table_plot.set_ylim(0.0, 1.0)
+        prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
+
+
+    def plotGenWeights(self):
+        # get weights from generative agent
+        weights = self.genAgent.calcWeights()
+
+        # initialize weights figure and plot
+        weights_figure = plt.figure(figsize=(8, 6))
+        weights_plot = weights_figure.add_subplot(1, 1, 1)
+
+        # plot weights
+        weights_plot.plot(self.stimuli['frames'] * 180 / np.pi, weights['prior'], label='prior weight')
+        weights_plot.plot(self.stimuli['frames'] * 180 / np.pi, weights['context'], label='visual context weight')
+        weights_plot.set_xlabel('frame [deg]')
+        weights_plot.set_ylabel('weight')
+        weights_plot.set_ylim(0.0, 1.0)
+        weights_plot.set_title('Relative Weights of Prior and Visual Contextual Information')
+        weights_plot.legend()
 
 
     def initStimuliFigure(self):
@@ -76,36 +88,30 @@ class Plotter:
         self.stim_max = np.amax(self.stimuli['frames']) * 180 / np.pi
 
 
-    def plotStimuli(self, psi):
+    def plotStimuli(self):
         if self.selected_stimuli is None:
             self.initStimuliFigure()
 
         # add stimuli to self.selected_stimuli in degrees
-        rod, frame = psi.stim
+        rod, frame = self.psi.stim
         self.selected_stimuli['rods'].append(rod * 180.0 / np.pi)
         self.selected_stimuli['frames'].append(frame * 180.0 / np.pi)
 
-        # compute current trial number
-        trial_num = len(self.selected_stimuli['rods'])
-
         # only plot every self.plot_period trials
-        if trial_num == 1 or (trial_num % self.plot_period) == 0:
+        if self.trial_num == 1 or (self.trial_num % self.plot_period) == 0:
             # use shorter name
             plot = self.selected_stimuli_plot
 
             # plot selected stimuli
             plot.clear()
-            plot.scatter(np.arange(trial_num), self.selected_stimuli['rods'], s=self.point_size, label='rod [deg]')
-            plot.scatter(np.arange(trial_num), self.selected_stimuli['frames'], s=self.point_size, label='frame [deg]')
+            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['rods'], s=self.point_size, label='rod [deg]')
+            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['frames'], s=self.point_size, label='frame [deg]')
             plot.set_xlabel('trial number')
             plot.set_ylabel('selected stimulus [deg]')
             plot.set_xlim(0, self.iterations_num)
             plot.set_ylim(self.stim_min, self.stim_max)
             plot.set_title('Selected Stimuli for Each Trial')
             plot.legend()
-
-            # pause to let pyplot draw plot
-            plt.pause(0.0001)
 
 
     def initParameterValuesFigure(self):
@@ -119,47 +125,41 @@ class Plotter:
         self.param_values_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
 
 
-    def plotParameterValues(self, psi):
+    def plotParameterValues(self):
         if self.param_values is None:
             self.initParameterValuesFigure()
 
-        param_values_MAP = psi.calcParameterValues('MAP')
-        param_values_mean = psi.calcParameterValues('mean')
+        param_values_MAP = self.psi.calcParameterValues('MAP')
+        param_values_mean = self.psi.calcParameterValues('mean')
 
         # add parameter values to self.param_values
         for param in self.params.keys():
             self.param_values['MAP'][param].append(param_values_MAP[param])
             self.param_values['mean'][param].append(param_values_mean[param])
 
-        # compute current trial number
-        trial_num = len(self.param_values['MAP'][self.params.keys()[0]])
-
         # only draw plots every self.plot_period trials
-        if trial_num == 1 or (trial_num % self.plot_period) == 0:
+        if self.trial_num == 1 or (self.trial_num % self.plot_period) == 0:
             # draw each parameter's values plot
             for param in self.params.keys():
-                self.__plotParemeterValues(param, trial_num)
+                self.__plotParemeterValues(param)
 
             # add a single legend to the figure
             handles, labels = self.param_values_plots[self.params.keys()[0]].get_legend_handles_labels()
             self.param_values_figure.legend(handles, labels, loc='upper right')
 
             # fit all the plots to the screen with no overlapping text
-            plt.tight_layout()
-
-            # pause to let pyplot draw graphs
-            plt.pause(0.0001)
+            self.param_values_figure.tight_layout()
 
 
-    def __plotParemeterValues(self, param, trial_num):
+    def __plotParemeterValues(self, param):
         # retrieve specific parameter plot from self.param_values_plots
         plot = self.param_values_plots[param]
 
         # plot specific parameter values
         plot.clear()
         plot.hlines(self.params_gen[param], 1, self.iterations_num, label='generative parameter value')
-        plot.scatter(np.arange(trial_num), self.param_values['MAP'][param], s=self.point_size, label='parameter value based on MAP')
-        plot.scatter(np.arange(trial_num), self.param_values['mean'][param], s=self.point_size, label='expected parameter value')
+        plot.scatter(np.arange(self.trial_num), self.param_values['MAP'][param], s=self.point_size, label='parameter value based on MAP')
+        plot.scatter(np.arange(self.trial_num), self.param_values['mean'][param], s=self.point_size, label='expected parameter value')
         plot.set_xlabel('trial number')
         plot.set_ylabel(param)
         plot.set_xlim(0, self.iterations_num)
@@ -176,40 +176,34 @@ class Plotter:
         self.param_distributions_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
 
 
-    def plotParameterDistributions(self, psi, projection=None):
+    def plotParameterDistributions(self, projection=None):
         if self.param_distributions is None:
             self.initParemeterDistributionsFigure(projection)
 
-        param_distributions = psi.calcParameterDistributions()
+        param_distributions = self.psi.calcParameterDistributions()
 
         # add parameter distributions to self.param_distributions
         for param in self.params.keys():
             self.param_distributions[param].append(param_distributions[param])
 
-        # compute current trial number
-        trial_num = len(self.param_distributions[self.params.keys()[0]])
-
         # only draw plots every self.plot_period trials
-        if trial_num == 1 or (trial_num % self.plot_period) == 0:
+        if self.trial_num == 1 or (self.trial_num % self.plot_period) == 0:
             # plot the plot for each parameter using the specified projection
             for param in self.params.keys():
                 if projection == '3d':
-                    self.__plotParameterDistributions3D(param, trial_num)
+                    self.__plotParameterDistributions3D(param)
                 else:
-                    self.__plotParameterDistributions(param, trial_num)
+                    self.__plotParameterDistributions(param)
 
             # add a single legend to the figure
             handles, labels = self.param_distributions_plots[self.params.keys()[0]].get_legend_handles_labels()
             self.param_distributions_figure.legend(handles, labels, loc='upper right')
 
             # fit all the plots to the screen with no overlapping text
-            plt.tight_layout()
-
-            # pause to let pyplot draw graphs
-            plt.pause(0.0001)
+            self.param_distributions_figure.tight_layout()
 
 
-    def __plotParameterDistributions(self, param, trial_num):
+    def __plotParameterDistributions(self, param):
         # retrieve specific parameter plot from self.param_distributions_plots
         plot = self.param_distributions_plots[param]
 
@@ -220,10 +214,10 @@ class Plotter:
         plot.set_xlabel(param)
         plot.set_ylabel('P(%s = x)' % param)
         plot.set_ylim(0.0, 1.0)
-        plot.set_title('%s Distribution for Trial %d' % (param, trial_num))
+        plot.set_title('%s Distribution for Trial %d' % (param, self.trial_num))
 
 
-    def __plotParameterDistributions3D(self, param, trial_num):
+    def __plotParameterDistributions3D(self, param):
         # retrieve specific parameter plot from self.param_distributions_plots
         plot = self.param_distributions_plots[param]
 
@@ -240,7 +234,7 @@ class Plotter:
         surface_gen = plot.plot_surface(X_gen, Y_gen, Z_gen, alpha=0.25, label='generative parameter value')
 
         # make data for parameter distribution surface
-        X, Y = np.meshgrid(np.arange(trial_num), self.params[param])
+        X, Y = np.meshgrid(np.arange(self.trial_num), self.params[param])
         Z = np.array(self.param_distributions[param]).transpose()
 
         # plot parameter distribution surface
@@ -262,12 +256,12 @@ class Plotter:
         surface._edgecolors2d = surface._facecolors3d
 
 
-    def plotNegLogLikelihood(self, genAgent, psi, param1, param2, projection=None, response_num=500):
+    def plotNegLogLikelihood(self, param1, param2, projection=None, response_num=500):
         # get data from generative agent
-        responses = genAgent.getResponses(response_num)
+        responses = self.genAgent.getResponses(response_num)
 
         # get negative log likelihood from psi object given the data
-        neg_log_likelihood = psi.calcNegLogLikelihood(responses)
+        neg_log_likelihood = self.psi.calcNegLogLikelihood(responses)
         neg_log_likelihood = neg_log_likelihood.reshape([len(self.params[param1]), len(self.params[param2])])
 
         # initialize negative log likelihood figure and plot
@@ -284,13 +278,10 @@ class Plotter:
         handles, labels = neg_log_likelihood_plot.get_legend_handles_labels()
         neg_log_likelihood_figure.legend(handles, labels, loc='upper right')
 
-        # pause to let pyplot draw graphs
-        plt.pause(0.0001)
-
 
     def __plotNegLogLikelihood(self, param1, param2, neg_log_likelihood, plot):
         # plot generative parameter values as a point and the negative log likelihood as a contour plot
-        plot.plot([self.params_gen [param1]], [self.params_gen[param2]], marker='o', label='generative parameter values')
+        plot.plot(self.params_gen [param1], self.params_gen[param2], marker='o', label='generative parameter values')
         plot.contourf(self.params[param1], self.params[param2], neg_log_likelihood)
         plot.set_xlabel(param1)
         plot.set_ylabel(param2)
