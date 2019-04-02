@@ -3,13 +3,13 @@ from scipy.stats import vonmises
 from scipy.interpolate import splev, splrep
 
 
-# transforms kappa values into sigma values
+# transforms kappa values into sigma values in degrees
 def kap2sig(kap):
     return np.sqrt((3.9945e3 / kap) - 0.0226e3)
 
 
 class GenerativeAgent:
-
+    # Create generative parameters and initialize probability table
     def __init__(self, params, stimuli):
         # Initialize parameter values
         self.kappa_ver = params['kappa_ver']
@@ -27,14 +27,14 @@ class GenerativeAgent:
         self.frame_num = len(self.frames)
 
         # initialize last response
-        self.lastResponse = -1
+        self.last_response = -1
 
         # pre-compute likelihood table
         print 'computing generative distribution\n'
-        self.makeProbTable()
+        self.__makeProbTable()
 
 
-    def makeProbTable(self):
+    def __makeProbTable(self):
         # the rods I need for the cumulative density function
         theta_rod = np.linspace(-np.pi, np.pi, 10000)
 
@@ -98,7 +98,7 @@ class GenerativeAgent:
         responses = np.random.binomial(1, PCW, responses_num)
 
         # save last response
-        self.lastResponse = responses[-1]
+        self.last_response = responses[-1]
 
         return responses
 

@@ -1,6 +1,6 @@
 import numpy as np
-from tqdm import trange
 import matplotlib.pyplot as plt
+from tqdm import trange
 
 from GenerativeAgent import GenerativeAgent
 from PSI_RiF import PSI_RiF
@@ -76,7 +76,6 @@ for stim_selection in ['adaptive', 'random']:
     # run model for given number of iterations
     print 'inferring model ' + stim_selection + 'ly'
 
-    responses = []
     for _ in trange(iterations_num):
         # get stimulus from psi object
         rod, frame = psi.stim
@@ -94,18 +93,18 @@ for stim_selection in ['adaptive', 'random']:
         # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
-        plotter.plotParameterDistributions()
+        # plotter.plotParameterDistributions()
 
         # plot parameter distributions of each trial as surfaces
-        # plotter.plotParameterDistributions(projection='3d')
+        plotter.plotParameterDistributions(projection='3d')
 
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        plotter.plotNegLogLikelihood()
+        # plotter.plotNegLogLikelihood()
 
         # plot negative log likelihood of responses thus far as a surface
-        # plotter.plotNegLogLikelihood(projection='3d')
+        plotter.plotNegLogLikelihood(projection='3d')
 
         # actually plot all the figures
         plotter.plot()
@@ -113,14 +112,6 @@ for stim_selection in ['adaptive', 'random']:
 
         # add data to psi object
         psi.addData(response)
-
-    # print results
-    print 'Parameters of generative model'
-    print params_gen
-    print 'Parameter values based on MAP'
-    print psi.calcParameterValues('MAP')
-    print 'Expected parameter values'
-    print psi.calcParameterValues('mean')
 
 # do not close plots when program finishes
 plt.show()
