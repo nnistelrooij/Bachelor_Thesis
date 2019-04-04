@@ -30,7 +30,7 @@ class PSI_RiF:
         self.rod_num = len(self.rods)
         self.frame_num = len(self.frames)
 
-        # pre-compute likelihood and parameter prior
+        # pre-compute likelihood
         print 'computing likelihood'
         self.__computeLikelihood()
 
@@ -40,89 +40,6 @@ class PSI_RiF:
 
         # reset psi object to initial values
         self.reset(stim_selection)
-
-
-    def reset(self, stim_selection='adaptive'):
-        # compute initial prior
-        print 'computing prior'
-        self.__computePrior()
-
-        # calculate best next stimulus with lowest entropy or a random stimulus based on self.stim_selection
-        self.stim_selection = stim_selection
-        self.__calcNextStim()
-
-
-    def addData(self, response):
-        # update prior based on response
-        if response == 1:
-            self.prior = self.paxs[:, self.stim1_index, self.stim2_index]
-        elif response == 0:
-            self.prior = self.paxf[:, self.stim1_index, self.stim2_index]
-        else:
-            raise Exception, 'response is ' + str(response) + ', but must be 1 or 0'
-
-        # update stimulus based on posterior
-        self.__calcNextStim()
-
-
-    def calcParameterValues(self, mode='mean'):
-        if mode == 'MAP':
-            param_values = self.__calcParameterValuesMAP()
-        elif mode == 'mean':
-            param_values = self.__calcParameterValuesMean()
-        else:
-            raise Exception, 'undefined parameter value calculation mode: ' + mode
-
-        # put parameter values in dictionary
-        param_values_dict = {'kappa_ver': param_values[0],
-                             'kappa_hor': param_values[1],
-                             'tau': param_values[2],
-                             'kappa_oto': param_values[3],
-                             'lapse': param_values[4]}
-
-        return param_values_dict
-
-
-    def calcParameterDistributions(self):
-        # get posterior in right shape
-        posterior = self.prior.reshape([self.kappa_ver_num, self.kappa_hor_num, self.tau_num, self.kappa_oto_num, self.lapse_num])
-
-        param_distributions = []
-        for param in 'ijklm':
-            # calculate parameter distribution
-            param_distribution = np.einsum('ijklm->%s' % param, posterior)
-
-            # add parameter distribution to param_distributions
-            param_distributions.append(param_distribution)
-
-        # put parameter distributions in dictionary
-        param_distributions_dict = {'kappa_ver': param_distributions[0],
-                                    'kappa_hor': param_distributions[1],
-                                    'tau': param_distributions[2],
-                                    'kappa_oto': param_distributions[3],
-                                    'lapse': param_distributions[4]}
-
-        return param_distributions_dict
-
-
-    def calcNegLogLikelihood(self, data):
-        if isinstance(data, np.ndarray):
-            # compute negative log likelihood for all right, respectively left responses
-            neg_log_likelihood_right_responses = np.einsum('ijk,jkl->i', -np.log(self.lookup), data)
-            neg_log_likelihood_left_responses = np.einsum('ijk,jkl->i', -np.log(1.0 - self.lookup), 1.0 - data)
-
-            # compute negative log likelihood for all responses
-            neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
-
-            return neg_log_likelihood
-        else:
-            # compute negative log likelihood for one response
-            if data == 1:
-                return -np.log(self.lookup[:, self.stim1_index, self.stim2_index])
-            elif data == 0:
-                return -np.log(1.0 - self.lookup[:, self.stim1_index, self.stim2_index])
-            else:
-                raise Exception, 'response is ' + str(data) + ', but must be 1 or 0'
 
 
     def __computeLikelihood(self):
@@ -215,6 +132,16 @@ class PSI_RiF:
         self.theta = cartesian([self.kappa_ver, self.kappa_hor, self.tau, self.kappa_oto, self.lapse]).transpose()
 
 
+    def reset(self, stim_selection='adaptive'):
+        # compute initial prior
+        print 'computing prior'
+        self.__computePrior()
+
+        # calculate best next stimulus with lowest entropy or a random stimulus based on self.stim_selection
+        self.stim_selection = stim_selection
+        self.__calcNextStim()
+
+
     def __computePrior(self):
         # compute parameter priors
         kappa_ver_prior = self.__computeUniformPrior(self.kappa_ver)
@@ -249,7 +176,7 @@ class PSI_RiF:
         # return normalized prior
         return prior / np.sum(prior)
 
-        
+
     def __calcNextStim(self):
         # compute posterior
         self.paxs = np.einsum('i,ijk->ijk', self.prior, self.lookup)
@@ -298,6 +225,37 @@ class PSI_RiF:
         return np.random.randint(self.rod_num), np.random.randint(self.frame_num)
 
 
+    def addData(self, response):
+        # update prior based on response
+        if response == 1:
+            self.prior = self.paxs[:, self.stim1_index, self.stim2_index]
+        elif response == 0:
+            self.prior = self.paxf[:, self.stim1_index, self.stim2_index]
+        else:
+            raise Exception, 'response is ' + str(response) + ', but must be 1 or 0'
+
+        # update stimulus based on posterior
+        self.__calcNextStim()
+
+
+    def calcParameterValues(self, mode='mean'):
+        if mode == 'MAP':
+            param_values = self.__calcParameterValuesMAP()
+        elif mode == 'mean':
+            param_values = self.__calcParameterValuesMean()
+        else:
+            raise Exception, 'undefined parameter value calculation mode: ' + mode
+
+        # put parameter values in dictionary
+        param_values_dict = {'kappa_ver': param_values[0],
+                             'kappa_hor': param_values[1],
+                             'tau': param_values[2],
+                             'kappa_oto': param_values[3],
+                             'lapse': param_values[4]}
+
+        return param_values_dict
+
+
     # calculate posterior parameter values based on MAP
     def __calcParameterValuesMAP(self):
         return self.theta[:, np.argmax(self.prior)]
@@ -306,3 +264,45 @@ class PSI_RiF:
     # calculate expected posterior parameter values
     def __calcParameterValuesMean(self):
         return np.matmul(self.theta, self.prior)
+
+
+    def calcParameterDistributions(self):
+        # get posterior in right shape
+        posterior = self.prior.reshape([self.kappa_ver_num, self.kappa_hor_num, self.tau_num, self.kappa_oto_num, self.lapse_num])
+
+        param_distributions = []
+        for axis in 'ijklm':
+            # calculate marginalized posterior for one parameter
+            param_distribution = np.einsum('ijklm->' + axis, posterior)
+
+            # add parameter distribution to param_distributions
+            param_distributions.append(param_distribution)
+
+        # put parameter distributions in dictionary
+        param_distributions_dict = {'kappa_ver': param_distributions[0],
+                                    'kappa_hor': param_distributions[1],
+                                    'tau': param_distributions[2],
+                                    'kappa_oto': param_distributions[3],
+                                    'lapse': param_distributions[4]}
+
+        return param_distributions_dict
+
+
+    def calcNegLogLikelihood(self, data):
+        if isinstance(data, np.ndarray):
+            # compute negative log likelihood for all right, respectively left responses
+            neg_log_likelihood_right_responses = np.einsum('ijk,jkl->i', -np.log(self.lookup), data)
+            neg_log_likelihood_left_responses = np.einsum('ijk,jkl->i', -np.log(1.0 - self.lookup), 1.0 - data)
+
+            # compute negative log likelihood for all responses
+            neg_log_likelihood = neg_log_likelihood_right_responses + neg_log_likelihood_left_responses
+
+            return neg_log_likelihood
+        else:
+            # compute negative log likelihood for one response
+            if data == 1:
+                return -np.log(self.lookup[:, self.stim1_index, self.stim2_index])
+            elif data == 0:
+                return -np.log(1.0 - self.lookup[:, self.stim1_index, self.stim2_index])
+            else:
+                raise Exception, 'response is ' + str(data) + ', but must be 1 or 0'

@@ -60,7 +60,7 @@ psi = PSI_RiF(params, stimuli)
 iterations_num = 500
 
 # initialize plotter and plot generative distribution, generative weights and the negative log likelihood
-plotter = Plotter(iterations_num, params, params_gen, stimuli, genAgent, psi)
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num)
 plotter.plotGenProbTable()
 plotter.plotGenWeights()
 plotter.plotNegLogLikelihood(responses_num=500)
@@ -81,7 +81,7 @@ for stim_selection in ['adaptive', 'random']:
         rod, frame = psi.stim
 
         # get response from the generative model
-        response = genAgent.getResponse(rod, frame)
+        response = genAgent.getResponses(rod, frame, 1)
 
 
         # plot selected stimuli

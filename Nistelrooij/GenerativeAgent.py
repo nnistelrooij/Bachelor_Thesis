@@ -5,13 +5,13 @@ from scipy.interpolate import splev, splrep
 
 # transforms kappa values into sigma values in degrees
 def kap2sig(kap):
-    return np.sqrt((3.9945e3 / kap) - 0.0226e3)
+    return np.sqrt((3994.5 / kap) - 22.6)
 
 
 class GenerativeAgent:
     # Create generative parameters and initialize probability table
     def __init__(self, params, stimuli):
-        # Initialize parameter values
+        # Initialize generative parameter values
         self.kappa_ver = params['kappa_ver']
         self.kappa_hor = params['kappa_hor']
         self.tau = params['tau']
@@ -38,10 +38,10 @@ class GenerativeAgent:
         # the rods I need for the cumulative density function
         theta_rod = np.linspace(-np.pi, np.pi, 10000)
 
-        # make space for look-up table
+        # allocate memory for the probability table
         self.prob_table = np.zeros([self.rod_num, self.frame_num])
 
-        # the otoliths
+        # the distribution of the otoliths
         P_oto = vonmises.pdf(theta_rod, self.kappa_oto)
 
         # compute kappas
@@ -55,7 +55,7 @@ class GenerativeAgent:
             P_frame180 = vonmises.pdf(theta_rod - np.pi - self.frames[i], kappa1[i])
             P_frame270 = vonmises.pdf(theta_rod - np.pi*3/2 - self.frames[i], kappa2[i])
 
-            # add convolved distributions to P_frame
+            # initialize convolved distributions as P_frame
             P_frame = P_frame0 + P_frame90 + P_frame180 + P_frame270
 
             # cumulative response distribution per frame
@@ -74,19 +74,32 @@ class GenerativeAgent:
 
     def __computeKappas(self):
         kappa1 = self.kappa_ver -\
-                 (1 - np.cos(np.abs(2 * self.frames))) *\
+                 (1.0 - np.cos(np.abs(2.0 * self.frames))) *\
                  self.tau *\
                  (self.kappa_ver - self.kappa_hor)
         kappa2 = self.kappa_hor +\
-                 (1 - np.cos(np.abs(2 * self.frames))) *\
-                 (1 - self.tau) *\
+                 (1.0 - np.cos(np.abs(2.0 * self.frames))) *\
+                 (1.0 - self.tau) *\
                  (self.kappa_ver - self.kappa_hor)
 
         return kappa1, kappa2
 
 
+    # determine response_num responses for each rod-frame pair
+    def getAllResponses(self, responses_num):
+        # initialize responses array
+        responses = np.empty([self.rod_num, self.frame_num, responses_num])
+
+        # determine response_num responses for each given rod and frame
+        for i in range(self.rod_num):
+            for j in range(self.frame_num):
+                responses[i, j] = self.getResponses(self.rods[i], self.frames[j], responses_num)
+
+        return responses
+
+
     # determine response_num responses of the generative agent on a given rod and frame orientation
-    def getResponse(self, stim_rod, stim_frame, responses_num=1):
+    def getResponses(self, stim_rod, stim_frame, responses_num):
         # find index of stimulus
         idx_rod = np.where(self.rods == stim_rod)[0]
         idx_frame = np.where(self.frames == stim_frame)[0]
@@ -103,22 +116,9 @@ class GenerativeAgent:
         return responses
 
 
-    # determine response_num responses for each rod-frame pair
-    def getAllResponses(self, responses_num):
-        # initialize responses array
-        responses = np.empty([self.rod_num, self.frame_num, responses_num])
-
-        # determine response_num responses for each given rod and frame
-        for i in range(self.rod_num):
-            for j in range(self.frame_num):
-                responses[i, j] = self.getResponse(self.rods[i], self.frames[j], responses_num)
-
-        return responses
-
-
     # calculate prior and visual context weights
     def calcWeights(self):
-        # compute prior variance
+        # compute prior variance repeated |frames| times
         prior_variance = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
 
         # compute visual context variance for each frame orientation
