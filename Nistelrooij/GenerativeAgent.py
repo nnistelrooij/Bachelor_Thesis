@@ -116,17 +116,29 @@ class GenerativeAgent:
         return responses
 
 
-    # calculate prior and visual context weights
-    def calcWeights(self):
-        # compute prior variance repeated |frames| times
-        prior_variance = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
+    # calculate otoliths and visual context variances in degrees
+    def calcVariances(self):
+        # compute otoliths variance, repeated |frames| times
+        otoliths_variance = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
 
-        # compute visual context variance for each frame orientation
+        # compute vertical visual context variance for each frame orientation
         kappa1, _ = self.__computeKappas()
         context_variance = kap2sig(kappa1)
 
+        # return variances in dictionary
+        return {'otoliths': otoliths_variance, 'context': context_variance}
+
+
+    # calculate otoliths and visual context weights
+    def calcWeights(self):
+        # calculate otoliths and visual context variances in degrees
+        variances = self.calcVariances()
+
+        # calculate normalizing term
+        denominator = (1.0 / variances['otoliths']) + (1.0 / variances['context'])
+
         # compute weights with equation given in Alberts et al. (2018), displayed in Alberts et al. (2017)
-        weights = {'prior': (1 / prior_variance) / ((1 / prior_variance) + (1 / context_variance)),
-                   'context': (1 / context_variance) / ((1 / prior_variance) + (1 / context_variance))}
+        weights = {'otoliths': (1.0 / variances['otoliths']) / denominator,
+                   'context': (1.0 / variances['context']) / denominator}
 
         return weights

@@ -57,10 +57,27 @@ class Plotter:
 
         # plot prob table
         prob_table_plot.plot(self.stimuli['rods'] * 180 / np.pi, self.genAgent.prob_table)
-        prob_table_plot.set_xlabel('rod [deg]')
+        prob_table_plot.set_xlabel('rod ($^\circ$)')
         prob_table_plot.set_ylabel('P(right)')
         prob_table_plot.set_ylim(0.0, 1.0)
         prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
+
+
+    def plotGenVariances(self):
+        # get variances from generative agent
+        variances = self.genAgent.calcVariances()
+
+        # initialize variances figure and plot
+        variances_figure = plt.figure(figsize=(8, 6))
+        variances_plot = variances_figure.add_subplot(1, 1, 1)
+
+        # plot variances
+        variances_plot.plot(self.stimuli['frames'] * 180 / np.pi, variances['otoliths'], label='otoliths variance')
+        variances_plot.plot(self.stimuli['frames'] * 180 / np.pi, variances['context'], label='visual context variance')
+        variances_plot.set_xlabel('frame ($^\circ$)')
+        variances_plot.set_ylabel('variance ($^\circ$)')
+        variances_plot.set_title('Variances of Otoliths and Visual Contextual Information')
+        variances_plot.legend()
 
 
     def plotGenWeights(self):
@@ -72,12 +89,12 @@ class Plotter:
         weights_plot = weights_figure.add_subplot(1, 1, 1)
 
         # plot weights
-        weights_plot.plot(self.stimuli['frames'] * 180 / np.pi, weights['prior'], label='prior weight')
+        weights_plot.plot(self.stimuli['frames'] * 180 / np.pi, weights['otoliths'], label='otoliths weight')
         weights_plot.plot(self.stimuli['frames'] * 180 / np.pi, weights['context'], label='visual context weight')
-        weights_plot.set_xlabel('frame [deg]')
+        weights_plot.set_xlabel('frame ($^\circ$)')
         weights_plot.set_ylabel('weight')
         weights_plot.set_ylim(0.0, 1.0)
-        weights_plot.set_title('Relative Weights of Prior and Visual Contextual Information')
+        weights_plot.set_title('Relative Weights of Otoliths and Visual Contextual Information')
         weights_plot.legend()
 
 
@@ -97,10 +114,10 @@ class Plotter:
 
             # plot selected stimuli
             plot.clear()
-            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['rods'], s=self.point_size, label='rod [deg]')
-            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['frames'], s=self.point_size, label='frame [deg]')
+            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['rods'], s=self.point_size, label='rod ($^\circ$)')
+            plot.scatter(np.arange(self.trial_num), self.selected_stimuli['frames'], s=self.point_size, label='frame ($^\circ$)')
             plot.set_xlabel('trial number')
-            plot.set_ylabel('selected stimulus [deg]')
+            plot.set_ylabel('selected stimulus ($^\circ$)')
             plot.set_xlim(0, self.iterations_num)
             plot.set_ylim(self.stim_min, self.stim_max)
             plot.set_title('Selected Stimuli for Each Trial')
@@ -360,5 +377,5 @@ class Plotter:
         if responses_num == 1:
             title_suffix = ' for Trial %d' % self.trial_num
         else:
-            title_suffix = ' for %d Responses' % len(self.stimuli['rods']) * len(self.stimuli['frames']) * responses_num
+            title_suffix = ' for %d Responses' % (len(self.stimuli['rods']) * len(self.stimuli['frames']) * responses_num)
         plot.set_title('Negative Log Likelihood of %s and %s' % (self.free_param1, self.free_param2) + title_suffix)
