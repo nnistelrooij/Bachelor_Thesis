@@ -98,6 +98,21 @@ class Plotter:
         weights_plot.legend()
 
 
+    def plotGenPSE(self):
+        # get PSEs from generative agent in degrees
+        PSE = self.genAgent.calcPSE()
+
+        # initialize PSE figure and plot
+        PSE_figure = plt.figure(figsize=(8, 6))
+        PSE_plot = PSE_figure.add_subplot(1, 1, 1)
+
+        # plot PSE
+        PSE_plot.plot(self.stimuli['frames'] * 180 / np.pi, PSE)
+        PSE_plot.set_xlabel('frame ($^\circ$)')
+        PSE_plot.set_ylabel('PSE ($^\circ$)')
+        PSE_plot.set_title('Point of Subjective Equivalence for Each Frame Orientation')
+
+
     def plotStimuli(self):
         if self.selected_stimuli is None:
             self.__initStimuliFigure()
@@ -320,7 +335,7 @@ class Plotter:
             raise Exception, 'model must have exactly two free parameters'
 
         # initialize negative log likelihood array
-        self.neg_log_likelihood = np.zeros([len(self.params[self.free_param1]), len(self.params[self.free_param2])])
+        self.neg_log_likelihood = np.zeros([len(self.params[self.free_param2]), len(self.params[self.free_param1])])
 
 
     def __plotNegLogLikelihood3D(self, responses_num):
@@ -340,7 +355,7 @@ class Plotter:
 
         # make data for negative log likelihood surface
         X, Y = np.meshgrid(self.params[self.free_param1], self.params[self.free_param2])
-        Z = self.neg_log_likelihood.transpose()
+        Z = self.neg_log_likelihood
 
         # plot negative log likelihood surface
         surface = plot.plot_surface(X, Y, Z, label='negative log likelihood')
@@ -354,7 +369,7 @@ class Plotter:
         if responses_num == 1:
             title_suffix = ' for Trial %d' % self.trial_num
         else:
-            title_suffix = ' for %d Responses' % len(self.stimuli['rods']) * len(self.stimuli['frames']) * responses_num
+            title_suffix = ' for %d Responses' % (len(self.stimuli['rods']) * len(self.stimuli['frames']) * responses_num)
         plot.set_title('Negative Log Likelihood of %s and %s' % (self.free_param1, self.free_param2) + title_suffix)
 
         # I get an error when I do not do these two lines
@@ -369,7 +384,7 @@ class Plotter:
         # plot generative parameter values as a point and the negative log likelihood as a contour plot
         plot.clear()
         plot.plot(self.params_gen[self.free_param1], self.params_gen[self.free_param2], marker='o', label='generative parameter values')
-        plot.contourf(self.params[self.free_param1], self.params[self.free_param2], self.neg_log_likelihood.transpose())
+        plot.contourf(self.params[self.free_param1], self.params[self.free_param2], self.neg_log_likelihood)
         plot.set_xlabel(self.free_param1)
         plot.set_ylabel(self.free_param2)
 

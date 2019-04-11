@@ -142,3 +142,20 @@ class GenerativeAgent:
                    'context': (1.0 / variances['context']) / denominator}
 
         return weights
+
+
+    # calculate PSE for each frame orientation in degrees
+    def calcPSE(self):
+        # initialize PSE array
+        PSE = np.zeros(self.frame_num)
+
+        # for each frame orientation, add PSE to array
+        for i in range(self.frame_num):
+            # point of subjective equivalence when probability is 0.5
+            idx_rod = np.argmax(self.prob_table[:, i] > 0.5)
+
+            # add the PSE rod given the current frame orientation
+            PSE[i] = self.rods[idx_rod]
+
+        # return PSE in degrees
+        return PSE * 180 / np.pi

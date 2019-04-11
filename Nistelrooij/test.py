@@ -64,6 +64,7 @@ plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num)
 plotter.plotGenProbTable()
 plotter.plotGenVariances()
 plotter.plotGenWeights()
+plotter.plotGenPSE()
 plotter.plotNegLogLikelihood(responses_num=500)
 plotter.plot()
 
