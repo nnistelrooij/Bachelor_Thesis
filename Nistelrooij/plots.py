@@ -67,6 +67,11 @@ class Plotter:
         # get variances from generative agent
         variances = self.genAgent.calcVariances()
 
+        print 'Variances:\n\n\n'
+
+        for frame, i in zip(self.stimuli['frames'], range(len(self.stimuli['frames']))):
+            print frame * 180 / np.pi, variances['otoliths'][i], variances['context'][i]
+
         # initialize variances figure and plot
         variances_figure = plt.figure(figsize=(8, 6))
         variances_plot = variances_figure.add_subplot(1, 1, 1)
@@ -83,6 +88,11 @@ class Plotter:
     def plotGenWeights(self):
         # get weights from generative agent
         weights = self.genAgent.calcWeights()
+
+        print 'Weights:\n\n\n'
+
+        for frame, i in zip(self.stimuli['frames'], range(len(self.stimuli['frames']))):
+            print frame * 180 / np.pi, weights['otoliths'][i], weights['context'][i]
 
         # initialize weights figure and plot
         weights_figure = plt.figure(figsize=(8, 6))
@@ -101,6 +111,11 @@ class Plotter:
     def plotGenPSE(self):
         # get PSEs from generative agent in degrees
         PSE = self.genAgent.calcPSE()
+
+        print 'PSE:\n\n\n'
+
+        for frame, PSE_i in zip(self.stimuli['frames'], PSE):
+            print frame * 180 / np.pi, PSE_i
 
         # initialize PSE figure and plot
         PSE_figure = plt.figure(figsize=(8, 6))
@@ -121,6 +136,8 @@ class Plotter:
         rod, frame = self.psi.stim
         self.selected_stimuli['rods'].append(rod * 180.0 / np.pi)
         self.selected_stimuli['frames'].append(frame * 180.0 / np.pi)
+
+        print self.trial_num, rod * 180 / np.pi, frame * 180 / np.pi
 
         # only plot every self.plot_period trials
         if self.__isTimeToPlot():
