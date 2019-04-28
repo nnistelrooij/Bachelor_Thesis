@@ -46,9 +46,9 @@ class PSIfor:
                     for f in range(0,self.nframes):
 
                         # the context provided by the frame
-                        p_frame1 = vonmises.pdf(self.theta_rodself.theta_frame[f],kappa1[kv,kh,t,f])
+                        p_frame1 = vonmises.pdf(self.theta_rod-self.theta_frame[f],kappa1[kv,kh,t,f])
                         p_frame2 = vonmises.pdf(self.theta_rod-np.pi/2-self.theta_frame[f],kappa2[kv,kh,t,f])
-                        p_frame3 = vonmises.pdf(self.theta_rod-np.piself.theta_frame[f],kappa1[kv,kh,t,f])
+                        p_frame3 = vonmises.pdf(self.theta_rod-np.pi-self.theta_frame[f],kappa1[kv,kh,t,f])
                         p_frame4 = vonmises.pdf(self.theta_rod-3*np.pi/2-self.theta_frame[f],kappa2[kv,kh,t,f])
 
                         p_frame = (p_frame1+p_frame2+p_frame3+p_frame4)/4.0
