@@ -152,7 +152,7 @@ class Plotter:
             print 'trial rod frame'
 
             for i in range(self.iterations_num):
-                print i + 1, self.selected_stimuli['rods'][i] * 180 / np.pi, self.selected_stimuli['frames'][i] * 180 / np.pi
+                print (i + 1), self.selected_stimuli['rods'][i] * 180 / np.pi, self.selected_stimuli['frames'][i] * 180 / np.pi
 
         # only plot every self.plot_period trials
         if self.__isTimeToPlot():
