@@ -63,14 +63,17 @@ class Plotter:
         prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
 
 
-    def plotGenVariances(self):
+    def plotGenVariances(self, print_data=False):
         # get variances from generative agent
         variances = self.genAgent.calcVariances()
 
-        print 'Variances:\n\n\n'
+        # print data as space separated values
+        if print_data:
+            print '\n\n\nVariances:\n\n\n'
+            print 'frame otoliths context'
 
-        for frame, i in zip(self.stimuli['frames'], range(len(self.stimuli['frames']))):
-            print frame * 180 / np.pi, variances['otoliths'][i], variances['context'][i]
+            for i in range(len(self.stimuli['frames'])):
+                print self.stimuli['frames'][i] * 180 / np.pi, variances['otoliths'][i], variances['context'][i]
 
         # initialize variances figure and plot
         variances_figure = plt.figure(figsize=(8, 6))
@@ -85,14 +88,17 @@ class Plotter:
         variances_plot.legend()
 
 
-    def plotGenWeights(self):
+    def plotGenWeights(self, print_data=False):
         # get weights from generative agent
         weights = self.genAgent.calcWeights()
 
-        print 'Weights:\n\n\n'
+        # print data as space separated values
+        if print_data:
+            print '\n\n\nWeights:\n\n\n'
+            print 'frame otoliths context'
 
-        for frame, i in zip(self.stimuli['frames'], range(len(self.stimuli['frames']))):
-            print frame * 180 / np.pi, weights['otoliths'][i], weights['context'][i]
+            for i in range(len(self.stimuli['frames'])):
+                print self.stimuli['frames'][i] * 180 / np.pi, weights['otoliths'][i], weights['context'][i]
 
         # initialize weights figure and plot
         weights_figure = plt.figure(figsize=(8, 6))
@@ -108,14 +114,17 @@ class Plotter:
         weights_plot.legend()
 
 
-    def plotGenPSE(self):
+    def plotGenPSE(self, print_data=False):
         # get PSEs from generative agent in degrees
         PSE = self.genAgent.calcPSE()
 
-        print 'PSE:\n\n\n'
+        # print data as space separated values
+        if print_data:
+            print '\n\n\nPSE:\n\n\n'
+            print 'frame bias'
 
-        for frame, PSE_i in zip(self.stimuli['frames'], PSE):
-            print frame * 180 / np.pi, PSE_i
+            for i in range(len(self.stimuli['frames'])):
+                print self.stimuli['frames'][i] * 180 / np.pi, PSE[i]
 
         # initialize PSE figure and plot
         PSE_figure = plt.figure(figsize=(8, 6))
@@ -128,7 +137,7 @@ class Plotter:
         PSE_plot.set_title('Point of Subjective Equivalence for Each Frame Orientation')
 
 
-    def plotStimuli(self):
+    def plotStimuli(self, print_data=False):
         if self.selected_stimuli is None:
             self.__initStimuliFigure()
 
@@ -137,7 +146,13 @@ class Plotter:
         self.selected_stimuli['rods'].append(rod * 180.0 / np.pi)
         self.selected_stimuli['frames'].append(frame * 180.0 / np.pi)
 
-        print self.trial_num, rod * 180 / np.pi, frame * 180 / np.pi
+        # print data as space separated values
+        if self.trial_num == self.iterations_num and print_data:
+            print '\n\n\nSelected Stimuli:\n\n\n'
+            print 'trial rod frame'
+
+            for i in range(self.iterations_num):
+                print i + 1, self.selected_stimuli['rods'][i] * 180 / np.pi, self.selected_stimuli['frames'][i] * 180 / np.pi
 
         # only plot every self.plot_period trials
         if self.__isTimeToPlot():
