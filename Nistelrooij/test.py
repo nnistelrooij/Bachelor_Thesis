@@ -4,6 +4,7 @@ from tqdm import trange
 from collections import OrderedDict
 
 from GenerativeAgent import GenerativeAgent
+from GenerativeAgentData import GenerativeAgentData
 from PSI_RiF import PSI_RiF
 from plots import Plotter
 
@@ -16,14 +17,18 @@ def sig2kap(sig):  # in degrees
 
 kappa_ver = sig2kap(np.linspace(10.01, 0.0, 25))
 # kappa_ver = [sig2kap(4.87)]
-kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
-# kappa_hor = [sig2kap(52.26)]
+# kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
+kappa_hor = [sig2kap(52.26)]
+kappa_hor = [sig2kap(27.49)]
 # tau = np.linspace(0.58, 1, 25)
 tau = np.array([0.8])
+tau = np.array([1.0])
 # kappa_oto = sig2kap(np.linspace(2.71, 1.71, 25))
 kappa_oto = [sig2kap(2.21)]
+kappa_oto = [sig2kap(10.38)]
 # lapse = np.linspace(0.0, 0.06, 25)
 lapse = [0.02]
+lapse = [0.07]
 
 params = OrderedDict()
 params['kappa_ver'] = kappa_ver
@@ -68,7 +73,12 @@ stimuli = {'rods': rods, 'frames': frames}
 
 
 # initialize generative agent
-genAgent = GenerativeAgent(params_gen, stimuli)
+genAgent = GenerativeAgentData('c1_frame.txt')
+
+rods = genAgent.rods
+frames = genAgent.frames
+
+stimuli = {'rods': rods, 'frames': frames}
 
 # initialize psi object
 psi = PSI_RiF(params, stimuli)
@@ -77,13 +87,13 @@ psi = PSI_RiF(params, stimuli)
 iterations_num = 500
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
-plotter.plotGenProbTable()
-plotter.plotGenVariances(print_data=True)
-plotter.plotGenWeights(print_data=True)
-plotter.plotGenPSE(print_data=True)
-plotter.plotNegLogLikelihood(responses_num=500)
-plotter.plot()
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
+# plotter.plotGenProbTable()
+# plotter.plotGenVariances(print_data=True)
+# plotter.plotGenWeights(print_data=True)
+# plotter.plotGenPSE(print_data=True)
+# plotter.plotNegLogLikelihood(responses_num=500)
+# plotter.plot()
 
 
 print_param_distribution_data = False
@@ -108,11 +118,15 @@ for stim_selection in ['adaptive', 'random']*10:
         rod, frame = psi.stim
 
         # get response from the generative model
-        response = genAgent.getResponses(rod, frame, 1)
+        stim, response = genAgent.getResponse(rod, frame)
+        if response is None:
+            i = 2
+
+        psi.stim = stim
 
 
         # plot selected stimuli
-        # plotter.plotStimuli()
+        plotter.plotStimuli()
 
         # plot updated parameter values based on mean and MAP
         # plotter.plotParameterValues()
@@ -120,7 +134,7 @@ for stim_selection in ['adaptive', 'random']*10:
         # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
-        # plotter.plotParameterDistributions()
+        plotter.plotParameterDistributions()
 
         # plot parameter distributions of each trial as surfaces
         # plotter.plotParameterDistributions(projection='3d')
@@ -128,7 +142,7 @@ for stim_selection in ['adaptive', 'random']*10:
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        plotter.plotNegLogLikelihood()
+        # plotter.plotNegLogLikelihood()
 
         # plot negative log likelihood of responses thus far as a surface
         # plotter.plotNegLogLikelihood(projection='3d')
