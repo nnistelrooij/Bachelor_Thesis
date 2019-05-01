@@ -148,7 +148,7 @@ class PSI_RiF:
         kappa_hor_prior = self.__computeUniformPrior(self.kappa_hor)
         tau_prior = self.__computeBetaPrior(self.tau, 10, 1.6, 0.6467)
         kappa_oto_prior = self.__computeUniformPrior(self.kappa_oto)
-        lapse_prior = self.__computeBetaPrior(self.lapse, 2.0, 35, 0.001107)
+        lapse_prior = self.__computeBetaPrior(self.lapse, 2.0, 35, 0.1322)
 
         # all the combinations of all parameter prior probabilities
         theta_prior = cartesian([kappa_ver_prior, kappa_hor_prior, tau_prior, kappa_oto_prior, lapse_prior])
