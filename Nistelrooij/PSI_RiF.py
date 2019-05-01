@@ -146,9 +146,9 @@ class PSI_RiF:
         # compute parameter priors
         kappa_ver_prior = self.__computeUniformPrior(self.kappa_ver)
         kappa_hor_prior = self.__computeUniformPrior(self.kappa_hor)
-        tau_prior = self.__computeBetaPrior(1.0 - self.tau, 2.1, 10)
+        tau_prior = self.__computeBetaPrior(self.tau, 10, 1.6, 0.6467)
         kappa_oto_prior = self.__computeUniformPrior(self.kappa_oto)
-        lapse_prior = self.__computeBetaPrior(self.lapse, 2.2, 60)
+        lapse_prior = self.__computeBetaPrior(self.lapse, 2.0, 35, 0.001107)
 
         # all the combinations of all parameter prior probabilities
         theta_prior = cartesian([kappa_ver_prior, kappa_hor_prior, tau_prior, kappa_oto_prior, lapse_prior])
@@ -163,15 +163,13 @@ class PSI_RiF:
 
 
     # beta prior with a and b as shape parameters
-    def __computeBetaPrior(self, param, a, b):
-        # make a copy so that self.*param* is not changed
-        param = np.copy(param)
-
-        # cannot take the beta of 0
-        param[param == 0.0] = 1.0e-3
+    def __computeBetaPrior(self, param, a, b, param_threshold):
+        # prior threshold to recover extreme values
+        prior_threshold = beta.pdf(param_threshold, a, b)
 
         # compute beta prior
         prior = beta.pdf(param, a, b)
+        prior[prior < prior_threshold] = prior_threshold
 
         # return normalized prior
         return prior / np.sum(prior)
