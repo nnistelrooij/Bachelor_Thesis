@@ -26,10 +26,11 @@ class Plotter:
 
 
     def reset(self):
-        # initialize selected stimuli, parameter values and distributions and the negative log likelihood as Nones.
+        # reset all the data members to Nones.
         self.selected_stimuli = None
         self.param_values = None
         self.param_distributions = None
+        self.param_variances = None
         self.neg_log_likelihood = None
 
         # reset current trial number
@@ -264,7 +265,7 @@ class Plotter:
 
 
     def __initParemeterDistributionsFigure(self, projection):
-        # initialize calculated parameter values plots
+        # initialize parameter distribution plots
         self.param_distributions_figure = plt.figure(figsize=(15, 8))
         plots = [self.param_distributions_figure.add_subplot(2, 3, i, projection=projection) for i in [1, 2, 4, 5, 6]]
 
@@ -324,6 +325,53 @@ class Plotter:
         plot.set_ylabel('P(%s = x)' % param)
         plot.set_ylim(0.0, 1.0)
         plot.set_title('%s Distribution for Trial %d' % (param, self.trial_num))
+
+
+    def plotParameterVariances(self):
+        if self.param_variances is None:
+            self.__initParemeterVariancesFigure()
+
+        param_variances = self.psi.calcParameterVariances()
+
+        # add parameter variances to self.param_variances
+        for param in self.params.keys():
+            self.param_variances[param].append(param_variances[param])
+
+        # only draw plots every self.plot_period trials
+        if self.__isTimeToPlot():
+            # plot the plot for each parameter
+            for param in self.params.keys():
+                self.__plotParameterVariances(param)
+
+            # add a single legend to the figure
+            handles, labels = self.param_variances_plots[self.params.keys()[0]].get_legend_handles_labels()
+            self.param_variances_figure.legend(handles, labels, loc='upper right')
+
+            # fit all the plots to the screen with no overlapping text
+            self.param_variances_figure.tight_layout()
+
+
+    def __initParemeterVariancesFigure(self):
+        # initialize parameter variances plots
+        self.param_variances_figure = plt.figure(figsize=(15, 8))
+        plots = [self.param_variances_figure.add_subplot(2, 3, i) for i in [1, 2, 4, 5, 6]]
+
+        # initialize parameter variances and parameter variances plots dictionaries
+        self.param_variances = {param: [] for param in self.params.keys()}
+        self.param_variances_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
+
+
+    def __plotParameterVariances(self, param):
+        # retrieve specific parameter plot from self.param_variances_plots
+        plot = self.param_variances_plots[param]
+
+        # plot specific parameter variances
+        plot.clear()
+        plot.plot(np.arange(self.trial_num), self.param_variances[param], label='parameter values distribution variance')
+        plot.set_xlabel('trial number')
+        plot.set_ylabel('%s variance' % param)
+        plot.set_xlim(0, self.iterations_num)
+        plot.set_title('%s Variance for Each Trial' % param)
 
 
     def plotNegLogLikelihood(self, projection=None, responses_num=1):

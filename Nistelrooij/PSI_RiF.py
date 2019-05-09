@@ -14,6 +14,7 @@ class PSI_RiF:
         self.tau = params['tau']
         self.kappa_oto = params['kappa_oto']
         self.lapse = params['lapse']
+        self.params = params
 
         # Initialize stimulus grids
         self.rods = stimuli['rods']
@@ -284,6 +285,20 @@ class PSI_RiF:
                                     'lapse': param_distributions[4]}
 
         return param_distributions_dict
+
+
+    def calcParameterVariances(self):
+        # calculate parameter means and parameter distributions
+        param_means = self.calcParameterValues(mode='mean')
+        param_distributions = self.calcParameterDistributions()
+
+        # return dictionary with each parameter values distribution variance
+        return {param: self.__calcParameterVariance(param, param_means, param_distributions) for param in self.params.keys()}
+
+
+    # calculate parameter values distribution variance
+    def __calcParameterVariance(self, param, param_means, param_distributions):
+        return np.sqrt(np.sum(param_distributions[param] * (self.params[param] - param_means[param])**2))
 
 
     def calcNegLogLikelihood(self, data):

@@ -77,7 +77,7 @@ psi = PSI_RiF(params, stimuli)
 iterations_num = 500
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
 plotter.plotGenProbTable()
 plotter.plotGenVariances(print_data=True)
 plotter.plotGenWeights(print_data=True)
@@ -89,11 +89,11 @@ plotter.plot()
 print_param_distribution_data = False
 param_distribution_data = {'param': 'lapse', 'adaptive': [], 'random': []}
 
-print_neg_log_likelihood_data = True
+print_neg_log_likelihood_data = False
 neg_log_likelihood_data = {'adaptive': [], 'random': []}
 
 
-for stim_selection in ['adaptive', 'random']*10:
+for stim_selection in ['adaptive', 'random']:
     # set stimulus selection mode and reset psi object to initial values
     psi.reset(stim_selection)
 
@@ -128,10 +128,13 @@ for stim_selection in ['adaptive', 'random']*10:
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        plotter.plotNegLogLikelihood()
+        # plotter.plotNegLogLikelihood()
 
         # plot negative log likelihood of responses thus far as a surface
         # plotter.plotNegLogLikelihood(projection='3d')
+
+        # plot parameter value distribution variances of each trial
+        plotter.plotParameterVariances()
 
         # actually plot all the figures
         plotter.plot()
