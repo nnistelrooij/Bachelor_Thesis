@@ -143,22 +143,6 @@ for stim_selection in ['adaptive', 'random']*10:
     # save final distribution/negative log likelihood of current experiment
     if print_neg_log_likelihood_data:
         neg_log_likelihood_data[stim_selection].append(plotter.neg_log_likelihood)
-    if print_param_distribution_data:
-        param_distribution_data[stim_selection].append(plotter.param_distributions[param_distribution_data['param']][-1])
-
-
-if print_param_distribution_data:
-    param_distribution_data['adaptive'] = np.array(param_distribution_data['adaptive'])
-    param_distribution_data['random'] = np.array(param_distribution_data['random'])
-
-    for stim_selection in ['adaptive', 'random']:
-        print '\n\n\n%s %s Distribution:\n\n\n' % (param_distribution_data['param'], stim_selection)
-        print 'sample %s mean mean_minus_std mean_plus_std' % param_distribution_data['param']
-
-        for i in range(len(params[param_distribution_data['param']])):
-            mean = np.mean(param_distribution_data[stim_selection][:, i])
-            std = np.std(param_distribution_data[stim_selection][:, i])
-            print (i + 1), params[param_distribution_data['param']][i], mean, max(mean - std, 0), min(mean + std, 1)
 
 
 if print_neg_log_likelihood_data:
