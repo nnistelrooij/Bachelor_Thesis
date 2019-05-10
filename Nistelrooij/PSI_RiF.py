@@ -288,17 +288,37 @@ class PSI_RiF:
 
 
     def calcParameterVariances(self):
-        # calculate parameter means and parameter distributions
+        # calculate normalized parameter ranges
+        param_values_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
+
+        # calculate normalized mean parameter values
         param_means = self.calcParameterValues(mode='mean')
+
+        param_means_norm = {}
+        for param in self.params.keys():
+            param_min = self.params[param][0]
+            param_max = self.params[param][-1]
+            if len(self.params[param]) == 1:
+                # choose mean of 0.5 instead of dividing by 0
+                param_means_norm[param] = 0.5
+            else:
+                # calculate mean as proportion of parameter values
+                param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
+
+        # calculate parameter distributions
         param_distributions = self.calcParameterDistributions()
 
-        # return dictionary with each parameter values distribution variance
-        return {param: self.__calcParameterVariance(param, param_means, param_distributions) for param in self.params.keys()}
+        # make dictionary with each parameter values distribution variance
+        param_variances = {}
+        for param in self.params.keys():
+            param_variances[param] = self.__calcParameterVariance(param, param_values_norm, param_means_norm, param_distributions)
+
+        return param_variances
 
 
     # calculate parameter values distribution variance
-    def __calcParameterVariance(self, param, param_means, param_distributions):
-        return np.sqrt(np.sum(param_distributions[param] * (self.params[param] - param_means[param])**2))
+    def __calcParameterVariance(self, param, param_values, param_means, param_distributions):
+        return np.sqrt(np.sum(param_distributions[param] * (param_values[param] - param_means[param])**2))
 
 
     def calcNegLogLikelihood(self, data):
