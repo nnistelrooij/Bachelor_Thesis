@@ -79,9 +79,9 @@ iterations_num = 500
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
 plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
 plotter.plotGenProbTable()
-plotter.plotGenVariances(print_data=True)
-plotter.plotGenWeights(print_data=True)
-plotter.plotGenPSE(print_data=True)
+plotter.plotGenVariances()
+plotter.plotGenWeights()
+plotter.plotGenPSE()
 plotter.plotNegLogLikelihood(responses_num=500)
 plotter.plot()
 
