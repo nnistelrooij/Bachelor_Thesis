@@ -291,34 +291,42 @@ class PSI_RiF:
         # calculate normalized parameter ranges
         param_values_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
 
-        # calculate normalized mean parameter values
+        
+        # calculate non-normalized parameter mean values
         param_means = self.calcParameterValues(mode='mean')
 
+        # normalize each parameter mean value
         param_means_norm = {}
         for param in self.params.keys():
-            param_min = self.params[param][0]
-            param_max = self.params[param][-1]
-            if len(self.params[param]) == 1:
-                # choose mean of 0.5 instead of dividing by 0
+            # calcluate minimum and maximum of parameter ranges
+            param_min = np.amin(self.params[param])
+            param_max = np.amax(self.params[param])
+            
+            if param_min == param_max:
+                # choose normalized mean of 0.5 instead of dividing by 0
                 param_means_norm[param] = 0.5
             else:
-                # calculate mean as proportion of parameter values
+                # calculate normalized mean as proportion of maximum parameter value
                 param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
 
+                
         # calculate parameter distributions
         param_distributions = self.calcParameterDistributions()
 
+        
         # make dictionary with each parameter values distribution variance
         param_variances = {}
         for param in self.params.keys():
-            param_variances[param] = self.__calcParameterVariance(param, param_values_norm, param_means_norm, param_distributions)
+            param_variances[param] = self.__calcParameterVariance(param_values_norm[param],
+                                                                  param_means_norm[param],
+                                                                  param_distributions[param])
 
         return param_variances
 
 
     # calculate parameter values distribution variance
-    def __calcParameterVariance(self, param, param_values, param_means, param_distributions):
-        return np.sqrt(np.sum(param_distributions[param] * (param_values[param] - param_means[param])**2))
+    def __calcParameterVariance(self, param_values, param_mean, param_distribution):
+        return np.sqrt(np.sum(param_distribution * (param_values - param_mean)**2))
 
 
     def calcNegLogLikelihood(self, data):
