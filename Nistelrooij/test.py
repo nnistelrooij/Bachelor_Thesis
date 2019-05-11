@@ -79,7 +79,7 @@ iterations_num = 500
 experiments_num = 20
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
 plotter.plotGenProbTable()
 plotter.plotGenVariances()
 plotter.plotGenWeights()
@@ -93,7 +93,6 @@ printer = Printer(params, stimuli, genAgent, psi, iterations_num, experiments_nu
 printer.printGenVariances()
 printer.printGenWeights()
 printer.printGenPSE()
-
 
 for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
     # set stimulus selection mode and reset psi object to initial values
@@ -137,6 +136,9 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
 
         # plot negative log likelihood of responses thus far as a surface
         # plotter.plotNegLogLikelihood(projection='3d')
+
+        # plot parameter value distribution variances of each trial
+        plotter.plotParameterVariances()
 
         # actually plot all the figures
         # plotter.plot()
