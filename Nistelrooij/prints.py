@@ -9,7 +9,7 @@ class Printer:
         self.iterations_num = iterations_num
         self.experiments_num = experiments_mun
 
-        # save generative agent and psi object in Plotter object
+        # save generative agent and psi object in Printer object
         self.genAgent = genAgent
         self.psi = psi
 
@@ -17,7 +17,7 @@ class Printer:
         self.param_distributions = None
         self.neg_log_likelihood = None
 
-        # initialize current trial and current experiment numbers
+        # initialize current experiment number
         self.current_experiment_num = 0
 
         # reset printer for new experiment
