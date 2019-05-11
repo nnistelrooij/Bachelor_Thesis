@@ -130,7 +130,7 @@ class Printer:
                 print (i + 1), self.params[param][i], mean, max(mean - std, 0), min(mean + std, 1)
 
 
-    def printParameterVariances(self):
+    def printParameterVariances(self, normalize=True):
         if self.param_variances is None:
             # initialize parameter variances
             self.param_variances = {param: {'adaptive': [], 'random': []} for param in self.params.keys()}
@@ -140,7 +140,7 @@ class Printer:
             for param in self.params.keys():
                 self.param_variances[param][self.psi.stim_selection].append([])
 
-        param_variances = self.psi.calcParameterVariances()
+        param_variances = self.psi.calcParameterVariances(normalize)
 
         # add parameter variances to self.param_variances
         for param in self.params.keys():
@@ -153,7 +153,7 @@ class Printer:
 
 
     def __printParameterVariances(self, param):
-        variances = {'adaptive': np.array(self.param_variances[param]['adaptive']),
+        param_variances = {'adaptive': np.array(self.param_variances[param]['adaptive']),
                      'random': np.array(self.param_variances[param]['random'])}
 
         for stim_selection in ['adaptive', 'random']:
@@ -161,9 +161,8 @@ class Printer:
             print 'trial mean mean_minus_std mean_plus_std'
 
             for i in range(self.iterations_num):
-                mean = np.mean(variances[stim_selection][:, i])
-                std = np.std(variances[stim_selection][:, i])
-
+                mean = np.mean(param_variances[stim_selection][:, i])
+                std = np.std(param_variances[stim_selection][:, i])
                 print (i + 1), mean, max(mean - std, 0), mean + std
 
     def printNegLogLikelihood(self):
