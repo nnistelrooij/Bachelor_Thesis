@@ -6,6 +6,7 @@ from collections import OrderedDict
 from GenerativeAgent import GenerativeAgent
 from PSI_RiF import PSI_RiF
 from plots import Plotter
+from prints import Printer
 
 
 # transforms sigma values into kappa values
@@ -73,32 +74,35 @@ genAgent = GenerativeAgent(params_gen, stimuli)
 # initialize psi object
 psi = PSI_RiF(params, stimuli)
 
-# number of iterations of the experiment
+# number of iterations of the experiment and number of experiments
 iterations_num = 500
+experiments_num = 20
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
 plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
 plotter.plotGenProbTable()
-plotter.plotGenVariances(print_data=True)
-plotter.plotGenWeights(print_data=True)
-plotter.plotGenPSE(print_data=True)
+plotter.plotGenVariances()
+plotter.plotGenWeights()
+plotter.plotGenPSE()
 plotter.plotNegLogLikelihood(responses_num=500)
 plotter.plot()
 
 
-print_param_distribution_data = False
-param_distribution_data = {'param': 'lapse', 'adaptive': [], 'random': []}
+# initialize printer and print generative variances, weights and bias
+printer = Printer(params, stimuli, genAgent, psi, iterations_num, experiments_num)
+printer.printGenVariances()
+printer.printGenWeights()
+printer.printGenPSE()
 
-print_neg_log_likelihood_data = False
-neg_log_likelihood_data = {'adaptive': [], 'random': []}
-
-
-for stim_selection in ['adaptive', 'random']:
+for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
     # set stimulus selection mode and reset psi object to initial values
     psi.reset(stim_selection)
 
     # reset plotter to plot new figures
     plotter.reset()
+
+    # reset printer for new experiment
+    printer.reset()
 
     # run model for given number of iterations
     print 'inferring model ' + stim_selection + 'ly'
@@ -137,73 +141,25 @@ for stim_selection in ['adaptive', 'random']:
         plotter.plotParameterVariances()
 
         # actually plot all the figures
-        plotter.plot()
+        # plotter.plot()
+
+
+        # print selected stimuli data
+        # printer.printStimuli()
+
+        # print parameter distributions data
+        printer.printParameterDistributions()
+
+        # print negative log likelihood data
+        printer.printNegLogLikelihood()
+
+        # progress the printer to the next trial
+        printer.nextTrial()
+
 
 
         # add data to psi object
         psi.addData(response)
-
-    # save final distribution/negative log likelihood of current experiment
-    if print_neg_log_likelihood_data:
-        neg_log_likelihood_data[stim_selection].append(plotter.neg_log_likelihood)
-    if print_param_distribution_data:
-        param_distribution_data[stim_selection].append(plotter.param_distributions[param_distribution_data['param']][-1])
-
-
-if print_param_distribution_data:
-    param_distribution_data['adaptive'] = np.array(param_distribution_data['adaptive'])
-    param_distribution_data['random'] = np.array(param_distribution_data['random'])
-
-    for stim_selection in ['adaptive', 'random']:
-        print '\n\n\n%s %s Distribution:\n\n\n' % (param_distribution_data['param'], stim_selection)
-        print 'sample %s mean mean_minus_std mean_plus_std' % param_distribution_data['param']
-
-        for i in range(len(params[param_distribution_data['param']])):
-            mean = np.mean(param_distribution_data[stim_selection][:, i])
-            std = np.std(param_distribution_data[stim_selection][:, i])
-            print (i + 1), params[param_distribution_data['param']][i], mean, max(mean - std, 0), min(mean + std, 1)
-
-
-if print_neg_log_likelihood_data:
-    neg_log_likelihood_data['adaptive'] = np.array(neg_log_likelihood_data['adaptive'])
-    neg_log_likelihood_data['random'] = np.array(neg_log_likelihood_data['random'])
-
-    for stim_selection in ['adaptive', 'random']:
-        print '\n\n\n%s-%s %s Negative log Likelihood:\n\n\n' % (plotter.free_param1, plotter.free_param2, stim_selection)
-        print '%s_sample %s %s_sample %s mean std' % (plotter.free_param1, plotter.free_param1,
-                                                      plotter.free_param2, plotter.free_param2)
-
-        neg_log_likelihood_min = float('inf')
-        neg_log_likelihood_max = float('-inf')
-
-        for i in range(len(params[plotter.free_param2])):
-            for j in range(len(params[plotter.free_param1])):
-                mean = np.mean(neg_log_likelihood_data[stim_selection][:, i, j])
-                std = np.std(neg_log_likelihood_data[stim_selection][:, i, j])
-                print (j + 1), params[plotter.free_param1][j], (i + 1), params[plotter.free_param2][i], mean, std
-
-                neg_log_likelihood_min = min(neg_log_likelihood_min, mean)
-                neg_log_likelihood_max = max(neg_log_likelihood_max, mean)
-
-        print '\n\n\nMinimum and Maximum values of Mean Negative log Likelihood'
-        print neg_log_likelihood_min, neg_log_likelihood_max
-
-
-        param_values_at_minimum = np.empty([10, 2])
-        for i in range(10):
-            min_flat_index = np.argmin(neg_log_likelihood_data[stim_selection][i])
-            min_indices = np.unravel_index(min_flat_index, neg_log_likelihood_data[stim_selection][i].shape)
-            param_values_at_minimum[i] = [params[plotter.free_param1][min_indices[1]], params[plotter.free_param2][min_indices[0]]]
-
-        print '\n\n\n%s Mean Values at Minimum of Negative log Likelihood' % stim_selection
-        mean_param1 = np.mean(param_values_at_minimum[:, 0])
-        mean_param2 = np.mean(param_values_at_minimum[:, 1])
-        print mean_param1, mean_param2
-
-        print '\n\n\n%s Standard Deviations at Minimum of Negative log Likelihood' % stim_selection
-        std_param1 = np.std(param_values_at_minimum[:, 0])
-        std_param2 = np.std(param_values_at_minimum[:, 1])
-        print std_param1, std_param2
 
 
 # do not close plots when program finishes
