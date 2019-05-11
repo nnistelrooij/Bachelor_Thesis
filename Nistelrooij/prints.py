@@ -15,6 +15,7 @@ class Printer:
 
         # initialize data members as Nones
         self.param_distributions = None
+        self.param_variances = None
         self.neg_log_likelihood = None
 
         # initialize current experiment number
@@ -129,6 +130,42 @@ class Printer:
                 print (i + 1), self.params[param][i], mean, max(mean - std, 0), min(mean + std, 1)
 
 
+    def printParameterVariances(self):
+        if self.param_variances is None:
+            # initialize parameter variances
+            self.param_variances = {param: {'adaptive': [], 'random': []} for param in self.params.keys()}
+
+        # initialize parameter variances at start of each experiment
+        if self.trial_num == 1:
+            for param in self.params.keys():
+                self.param_variances[param][self.psi.stim_selection].append([])
+
+        param_variances = self.psi.calcParameterVariances()
+
+        # add parameter variances to self.param_variances
+        for param in self.params.keys():
+            self.param_variances[param][self.psi.stim_selection][-1].append(param_variances[param])
+
+        # print data at end of all experiments
+        if self.current_experiment_num == self.experiments_num:
+            for param in self.params.keys():
+                self.__printParameterVariances(param)
+
+
+    def __printParameterVariances(self, param):
+        variances = {'adaptive': np.array(self.param_variances[param]['adaptive']),
+                     'random': np.array(self.param_variances[param]['random'])}
+
+        for stim_selection in ['adaptive', 'random']:
+            print '\n\n\n%s %s Variances:\n\n\n' % (param, stim_selection)
+            print 'trial mean mean_minus_std mean_plus_std'
+
+            for i in range(self.iterations_num):
+                mean = np.mean(variances[stim_selection][:, i])
+                std = np.std(variances[stim_selection][:, i])
+
+                print (i + 1), mean, max(mean - std, 0), mean + std
+
     def printNegLogLikelihood(self):
         if self.neg_log_likelihood is None:
             # initialize negative log likelihood dictionary
@@ -180,9 +217,9 @@ class Printer:
 
 
     def __printNegLogLikelihoodMinMax(self, stim_selection):
-        neg_log_likelihood_summed = np.sum(self.neg_log_likelihood[stim_selection], axis=0)
-        neg_log_likelihood_min = np.amin(neg_log_likelihood_summed) / self.neg_log_likelihood[stim_selection].shape[0]
-        neg_log_likelihood_max = np.amax(neg_log_likelihood_summed) / self.neg_log_likelihood[stim_selection].shape[0]
+        mean_neg_log_likelihood = np.mean(self.neg_log_likelihood[stim_selection], axis=0)
+        neg_log_likelihood_min = np.amin(mean_neg_log_likelihood)
+        neg_log_likelihood_max = np.amax(mean_neg_log_likelihood)
 
         print '\n\n\nMinimum and Maximum values of Mean Negative log Likelihood'
         print neg_log_likelihood_min, neg_log_likelihood_max

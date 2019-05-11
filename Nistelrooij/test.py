@@ -15,12 +15,12 @@ def sig2kap(sig):  # in degrees
     return 3994.5 / (sig2 + 22.6)
 
 
-kappa_ver = sig2kap(np.linspace(10.01, 0.0, 25))
-# kappa_ver = [sig2kap(4.87)]
-kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
-# kappa_hor = [sig2kap(52.26)]
-# tau = np.linspace(0.58, 1, 25)
-tau = [0.8]
+# kappa_ver = sig2kap(np.linspace(10.01, 0.0, 25))
+kappa_ver = [sig2kap(4.87)]
+# kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
+kappa_hor = [sig2kap(52.26)]
+tau = np.linspace(0.58, 1, 25)
+# tau = [0.8]
 # kappa_oto = sig2kap(np.linspace(2.71, 1.71, 25))
 kappa_oto = [sig2kap(2.21)]
 # lapse = np.linspace(0.0, 0.06, 25)
@@ -84,7 +84,7 @@ plotter.plotGenProbTable()
 plotter.plotGenVariances()
 plotter.plotGenWeights()
 plotter.plotGenPSE()
-plotter.plotNegLogLikelihood(responses_num=500)
+# plotter.plotNegLogLikelihood(responses_num=500)
 plotter.plot()
 
 
@@ -141,17 +141,20 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
         plotter.plotParameterVariances()
 
         # actually plot all the figures
-        # plotter.plot()
+        plotter.plot()
 
 
         # print selected stimuli data
         # printer.printStimuli()
 
         # print parameter distributions data
-        printer.printParameterDistributions()
+        # printer.printParameterDistributions()
+
+        # print parameter distribution variances data
+        printer.printParameterVariances()
 
         # print negative log likelihood data
-        printer.printNegLogLikelihood()
+        # printer.printNegLogLikelihood()
 
         # progress the printer to the next trial
         printer.nextTrial()
