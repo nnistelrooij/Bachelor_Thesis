@@ -15,16 +15,16 @@ def sig2kap(sig):  # in degrees
     return 3994.5 / (sig2 + 22.6)
 
 
-# kappa_ver = sig2kap(np.linspace(10.01, 0.0, 25))
-kappa_ver = [sig2kap(4.87)]
-# kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
-kappa_hor = [sig2kap(52.26)]
-tau = np.linspace(0.58, 1, 25)
+kappa_ver = sig2kap(np.linspace(10.01, 0.0, 10))
+# kappa_ver = [sig2kap(4.87)]
+kappa_hor = sig2kap(np.linspace(99.12, 5.4, 10))
+# kappa_hor = [sig2kap(52.26)]
+tau = np.linspace(0.58, 1, 10)
 # tau = [0.8]
-# kappa_oto = sig2kap(np.linspace(2.71, 1.71, 25))
-kappa_oto = [sig2kap(2.21)]
-# lapse = np.linspace(0.0, 0.06, 25)
-lapse = [0.02]
+kappa_oto = sig2kap(np.linspace(2.71, 1.71, 10))
+# kappa_oto = [sig2kap(2.21)]
+lapse = np.linspace(0.0, 0.06, 10)
+# lapse = [0.02]
 
 params = OrderedDict()
 params['kappa_ver'] = kappa_ver
@@ -79,27 +79,27 @@ iterations_num = 500
 experiments_num = 20
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
-plotter.plotGenProbTable()
-plotter.plotGenVariances()
-plotter.plotGenWeights()
-plotter.plotGenPSE()
+# plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
+# plotter.plotGenProbTable()
+# plotter.plotGenVariances()
+# plotter.plotGenWeights()
+# plotter.plotGenPSE()
 # plotter.plotNegLogLikelihood(responses_num=500)
-plotter.plot()
+# plotter.plot()
 
 
 # initialize printer and print generative variances, weights and bias
 printer = Printer(params, stimuli, genAgent, psi, iterations_num, experiments_num)
-printer.printGenVariances()
-printer.printGenWeights()
-printer.printGenPSE()
+# printer.printGenVariances()
+# printer.printGenWeights()
+# printer.printGenPSE()
 
 for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
     # set stimulus selection mode and reset psi object to initial values
     psi.reset(stim_selection)
 
     # reset plotter to plot new figures
-    plotter.reset()
+    # plotter.reset()
 
     # reset printer for new experiment
     printer.reset()
@@ -138,10 +138,10 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
         # plotter.plotNegLogLikelihood(projection='3d')
 
         # plot parameter value distribution variances of each trial
-        plotter.plotParameterVariances()
+        # plotter.plotParameterVariances()
 
         # actually plot all the figures
-        plotter.plot()
+        # plotter.plot()
 
 
         # print selected stimuli data

@@ -246,13 +246,7 @@ class PSI_RiF:
             raise Exception, 'undefined parameter value calculation mode: ' + mode
 
         # put parameter values in dictionary
-        param_values_dict = {'kappa_ver': param_values[0],
-                             'kappa_hor': param_values[1],
-                             'tau': param_values[2],
-                             'kappa_oto': param_values[3],
-                             'lapse': param_values[4]}
-
-        return param_values_dict
+        return {param: value for param, value in zip(self.params.keys(), param_values)}
 
 
     # calculate posterior parameter values based on MAP
@@ -269,64 +263,58 @@ class PSI_RiF:
         # get posterior in right shape
         posterior = self.prior.reshape([self.kappa_ver_num, self.kappa_hor_num, self.tau_num, self.kappa_oto_num, self.lapse_num])
 
-        param_distributions = []
-        for axis in 'ijklm':
+        # put parameter distributions in dictionary
+        param_distributions = {}
+        for axis, param in zip('ijklm', self.params.keys()):
             # calculate marginalized posterior for one parameter
             param_distribution = np.einsum('ijklm->' + axis, posterior)
 
             # add parameter distribution to param_distributions
-            param_distributions.append(param_distribution)
+            param_distributions[param] = param_distribution
 
-        # put parameter distributions in dictionary
-        param_distributions_dict = {'kappa_ver': param_distributions[0],
-                                    'kappa_hor': param_distributions[1],
-                                    'tau': param_distributions[2],
-                                    'kappa_oto': param_distributions[3],
-                                    'lapse': param_distributions[4]}
-
-        return param_distributions_dict
+        return param_distributions
 
 
-    def calcParameterVariances(self):
-        # calculate normalized parameter ranges
-        param_values_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
-
-        
+    def calcParameterVariances(self, normalize=True):
         # calculate non-normalized parameter mean values
         param_means = self.calcParameterValues(mode='mean')
-
-        # normalize each parameter mean value
-        param_means_norm = {}
-        for param in self.params.keys():
-            # calcluate minimum and maximum of parameter ranges
-            param_min = np.amin(self.params[param])
-            param_max = np.amax(self.params[param])
-            
-            if param_min == param_max:
-                # choose normalized mean of 0.5 instead of dividing by 0
-                param_means_norm[param] = 0.5
-            else:
-                # calculate normalized mean as proportion of maximum parameter value
-                param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
-
                 
         # calculate parameter distributions
         param_distributions = self.calcParameterDistributions()
-
         
-        # make dictionary with each parameter values distribution variance
-        param_variances = {}
-        for param in self.params.keys():
-            param_variances[param] = self.__calcParameterVariance(param_values_norm[param],
-                                                                  param_means_norm[param],
-                                                                  param_distributions[param])
+        # make dictionary with each parameter values distribution variance normalized or not
+        if normalize:
+            # calculate normalized parameter ranges
+            param_values_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
+
+            # normalize each parameter mean value
+            param_means_norm = {}
+            for param in self.params.keys():
+                # calculate minimum and maximum of parameter range
+                param_min = self.params[param][0]
+                param_max = self.params[param][-1]
+
+                if param_min == param_max:
+                    # choose normalized mean of 0.5 instead of dividing by 0
+                    param_means_norm[param] = 0.5
+                else:
+                    # calculate normalized mean as proportion of range width
+                    param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
+
+            param_variances = self.__calcParameterVariances(param_values_norm, param_means_norm, param_distributions)
+        else:
+            param_variances = self.__calcParameterVariances(self.params, param_means, param_distributions)
 
         return param_variances
 
 
-    # calculate parameter values distribution variance
-    def __calcParameterVariance(self, param_values, param_mean, param_distribution):
-        return np.sqrt(np.sum(param_distribution * (param_values - param_mean)**2))
+    # calculate parameter values distribution variances
+    def __calcParameterVariances(self, param_values, param_means, param_distributions):
+        variances = {}
+        for param in self.params.keys():
+            variances[param] = np.sqrt(np.sum(param_distributions[param] * (param_values[param] - param_means[param])**2))
+
+        return variances
 
 
     def calcNegLogLikelihood(self, data):
