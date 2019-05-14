@@ -79,7 +79,7 @@ iterations_num = 500
 experiments_num = 20
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-# plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
+# plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
 # plotter.plotGenProbTable()
 # plotter.plotGenVariances()
 # plotter.plotGenWeights()
@@ -106,7 +106,6 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
 
     # run model for given number of iterations
     print 'inferring model ' + stim_selection + 'ly'
-
     for _ in trange(iterations_num):
         # get stimulus from psi object
         rod, frame = psi.stim
@@ -148,7 +147,7 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
         # printer.printStimuli()
 
         # print parameter distributions data
-        # printer.printParameterDistributions()
+        printer.printParameterDistributions()
 
         # print parameter distribution variances data
         printer.printParameterVariances()

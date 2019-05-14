@@ -130,7 +130,7 @@ class Printer:
                 print (i + 1), self.params[param][i], mean, max(mean - std, 0), min(mean + std, 1)
 
 
-    def printParameterVariances(self, normalize=True):
+    def printParameterVariances(self):
         if self.param_variances is None:
             # initialize parameter variances
             self.param_variances = {param: {'adaptive': [], 'random': []} for param in self.params.keys()}
@@ -140,7 +140,7 @@ class Printer:
             for param in self.params.keys():
                 self.param_variances[param][self.psi.stim_selection].append([])
 
-        param_variances = self.psi.calcParameterVariances(normalize)
+        param_variances = self.psi.calcParameterVariances()
 
         # add parameter variances to self.param_variances
         for param in self.params.keys():
@@ -154,7 +154,7 @@ class Printer:
 
     def __printParameterVariances(self, param):
         param_variances = {'adaptive': np.array(self.param_variances[param]['adaptive']),
-                     'random': np.array(self.param_variances[param]['random'])}
+                           'random': np.array(self.param_variances[param]['random'])}
 
         for stim_selection in ['adaptive', 'random']:
             print '\n\n\n%s %s Variances:\n\n\n' % (param, stim_selection)

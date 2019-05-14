@@ -295,11 +295,11 @@ class Plotter:
         plot.set_title('%s Distribution for Trial %d' % (param, self.trial_num))
 
 
-    def plotParameterVariances(self, normalize=True):
+    def plotParameterVariances(self):
         if self.param_variances is None:
             self.__initParemeterVariancesFigure()
 
-        param_variances = self.psi.calcParameterVariances(normalize)
+        param_variances = self.psi.calcParameterVariances()
 
         # add parameter variances to self.param_variances
         for param in self.params.keys():
