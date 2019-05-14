@@ -15,7 +15,7 @@ class Printer:
 
         # initialize data members as Nones
         self.param_distributions = None
-        self.param_variances = None
+        self.param_sds = None
         self.neg_log_likelihood = None
 
         # initialize current experiment number
@@ -130,40 +130,41 @@ class Printer:
                 print (i + 1), self.params[param][i], mean, max(mean - std, 0), min(mean + std, 1)
 
 
-    def printParameterVariances(self):
-        if self.param_variances is None:
-            # initialize parameter variances
-            self.param_variances = {param: {'adaptive': [], 'random': []} for param in self.params.keys()}
+    def printParameterStandardDeviations(self):
+        if self.param_sds is None:
+            # initialize parameter standard deviations dictionary
+            self.param_sds = {param: {'adaptive': [], 'random': []} for param in self.params.keys()}
 
-        # initialize parameter variances at start of each experiment
+        # initialize parameter standard deviations at start of each experiment
         if self.trial_num == 1:
             for param in self.params.keys():
-                self.param_variances[param][self.psi.stim_selection].append([])
+                self.param_sds[param][self.psi.stim_selection].append([])
 
-        param_variances = self.psi.calcParameterVariances()
+        param_sds = self.psi.calcParameterStandardDeviations()
 
-        # add parameter variances to self.param_variances
+        # add parameter standard deviations to self.param_sds
         for param in self.params.keys():
-            self.param_variances[param][self.psi.stim_selection][-1].append(param_variances[param])
+            self.param_sds[param][self.psi.stim_selection][-1].append(param_sds[param])
 
         # print data at end of all experiments
         if self.current_experiment_num == self.experiments_num:
             for param in self.params.keys():
-                self.__printParameterVariances(param)
+                self.__printParameterStandardDeviations(param)
 
 
-    def __printParameterVariances(self, param):
-        param_variances = {'adaptive': np.array(self.param_variances[param]['adaptive']),
-                           'random': np.array(self.param_variances[param]['random'])}
+    def __printParameterStandardDeviations(self, param):
+        param_sds = {'adaptive': np.array(self.param_sds[param]['adaptive']),
+                     'random': np.array(self.param_sds[param]['random'])}
 
         for stim_selection in ['adaptive', 'random']:
-            print '\n\n\n%s %s Variances:\n\n\n' % (param, stim_selection)
+            print '\n\n\n%s %s Standard Deviations:\n\n\n' % (param, stim_selection)
             print 'trial mean mean_minus_std mean_plus_std'
 
             for i in range(self.iterations_num):
-                mean = np.mean(param_variances[stim_selection][:, i])
-                std = np.std(param_variances[stim_selection][:, i])
-                print (i + 1), mean, max(mean - std, 0), mean + std
+                mean = np.mean(param_sds[stim_selection][:, i])
+                std = np.std(param_sds[stim_selection][:, i])
+                print (i + 1), mean, max(mean - std, 0), min(mean + std, 0.31914)
+
 
     def printNegLogLikelihood(self):
         if self.neg_log_likelihood is None:

@@ -30,7 +30,7 @@ class Plotter:
         self.selected_stimuli = None
         self.param_values = None
         self.param_distributions = None
-        self.param_variances = None
+        self.param_sds = None
         self.neg_log_likelihood = None
 
         # reset current trial number
@@ -187,7 +187,7 @@ class Plotter:
         # initialize parameter values and parameter values plots dictionaries
         self.param_values = {'MAP': {param: [] for param in self.params.keys()},
                              'mean': {param: [] for param in self.params.keys()}}
-        self.param_values_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
+        self.param_values_plots = {param: plot for param, plot in zip(self.params.keys(), plots)}
 
 
     def __plotParemeterValues(self, param):
@@ -239,7 +239,7 @@ class Plotter:
 
         # initialize parameter distributions and parameter distribution plots dictionaries
         self.param_distributions = {param: [] for param in self.params.keys()}
-        self.param_distributions_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
+        self.param_distributions_plots = {param: plot for param, plot in zip(self.params.keys(), plots)}
 
 
     def __plotParameterDistributions3D(self, param):
@@ -295,51 +295,51 @@ class Plotter:
         plot.set_title('%s Distribution for Trial %d' % (param, self.trial_num))
 
 
-    def plotParameterVariances(self):
-        if self.param_variances is None:
-            self.__initParemeterVariancesFigure()
+    def plotParameterStandardDeviations(self):
+        if self.param_sds is None:
+            self.__initParameterStandardDeviationsFigure()
 
-        param_variances = self.psi.calcParameterVariances()
+        param_sds = self.psi.calcParameterStandardDeviations()
 
-        # add parameter variances to self.param_variances
+        # add parameter standard deviations to self.param_sds
         for param in self.params.keys():
-            self.param_variances[param].append(param_variances[param])
+            self.param_sds[param].append(param_sds[param])
 
         # only draw plots every self.plot_period trials
         if self.__isTimeToPlot():
             # plot the plot for each parameter
             for param in self.params.keys():
-                self.__plotParameterVariances(param)
+                self.__plotParameterStandardDeviations(param)
 
             # add a single legend to the figure
-            handles, labels = self.param_variances_plots[self.params.keys()[0]].get_legend_handles_labels()
-            self.param_variances_figure.legend(handles, labels, loc='upper right')
+            handles, labels = self.param_sds_plots[self.params.keys()[0]].get_legend_handles_labels()
+            self.param_sds_figure.legend(handles, labels, loc='upper right')
 
             # fit all the plots to the screen with no overlapping text
-            self.param_variances_figure.tight_layout()
+            self.param_sds_figure.tight_layout()
 
 
-    def __initParemeterVariancesFigure(self):
-        # initialize parameter variances plots
-        self.param_variances_figure = plt.figure(figsize=(15, 8))
-        plots = [self.param_variances_figure.add_subplot(2, 3, i) for i in [1, 2, 4, 5, 6]]
+    def __initParameterStandardDeviationsFigure(self):
+        # initialize parameter standard deviation plots
+        self.param_sds_figure = plt.figure(figsize=(15, 8))
+        plots = [self.param_sds_figure.add_subplot(2, 3, i) for i in [1, 2, 4, 5, 6]]
 
-        # initialize parameter variances and parameter variances plots dictionaries
-        self.param_variances = {param: [] for param in self.params.keys()}
-        self.param_variances_plots = {param: plots[i] for param, i in zip(self.params.keys(), range(len(self.params)))}
+        # initialize parameter standard deviations and parameter standard deviation plots dictionaries
+        self.param_sds = {param: [] for param in self.params.keys()}
+        self.param_sds_plots = {param: plot for param, plot in zip(self.params.keys(), plots)}
 
 
-    def __plotParameterVariances(self, param):
-        # retrieve specific parameter plot from self.param_variances_plots
-        plot = self.param_variances_plots[param]
+    def __plotParameterStandardDeviations(self, param):
+        # retrieve specific parameter plot from self.param_sds_plots
+        plot = self.param_sds_plots[param]
 
-        # plot specific parameter variances
+        # plot specific parameter standard deviations
         plot.clear()
-        plot.plot(np.arange(self.trial_num), self.param_variances[param], label='parameter values distribution variance')
+        plot.plot(np.arange(self.trial_num), self.param_sds[param], label='parameter distribution standard deviation')
         plot.set_xlabel('trial number')
-        plot.set_ylabel('%s variance' % param)
+        plot.set_ylabel('%s SD' % param)
         plot.set_xlim(0, self.iterations_num)
-        plot.set_title('%s Variance for Each Trial' % param)
+        plot.set_title('%s Normalized Standard Deviation for Each Trial' % param)
 
 
     def plotNegLogLikelihood(self, projection=None, responses_num=1):

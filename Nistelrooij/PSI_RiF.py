@@ -5,25 +5,19 @@ from sklearn.utils.extmath import cartesian
 from tqdm import trange
 
 
-# transforms kappa values into sigma values in degrees
-def kap2sig(kap):
-    return np.sqrt((3994.5 / kap) - 22.6)
-
-
 class PSI_RiF:
     # Create parameter space and initialize prior, likelihood and stimulus
     def __init__(self, params, stimuli, stim_selection='adaptive'):
         # initialize parameter grids
-        self.kappa_ver = np.copy(params['kappa_ver'])
-        self.kappa_hor = np.copy(params['kappa_hor'])
-        self.tau = np.copy(params['tau'])
-        self.kappa_oto = np.copy(params['kappa_oto'])
-        self.lapse = np.copy(params['lapse'])
+        self.kappa_ver = params['kappa_ver']
+        self.kappa_hor = params['kappa_hor']
+        self.tau = params['tau']
+        self.kappa_oto = params['kappa_oto']
+        self.lapse = params['lapse']
 
-        # store parameter values dictionary and the same dictionary, but with sigmas
+        # save parameter values dictionary and the same dictionary, but normalized
         self.params = params
-        self.sigma_params = self.__calcSigmaParameterValues(
-            {param: np.copy(self.params[param]) for param in self.params.keys()}, convert=True)
+        self.params_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
 
         # Initialize stimulus grids
         self.rods = stimuli['rods']
@@ -50,21 +44,6 @@ class PSI_RiF:
 
         # reset psi object to initial values
         self.reset(stim_selection)
-
-
-    def __calcSigmaParameterValues(self, param_values, convert):
-        if convert:
-            return {'sigma_ver': kap2sig(param_values['kappa_ver']),
-                    'sigma_hor': kap2sig(param_values['kappa_hor']),
-                    'tau': param_values['tau'],
-                    'sigma_oto': kap2sig(param_values['kappa_oto']),
-                    'lapse': param_values['lapse']}
-        else:
-            return {'sigma_ver': param_values['kappa_ver'],
-                    'sigma_hor': param_values['kappa_hor'],
-                    'tau': param_values['tau'],
-                    'sigma_oto': param_values['kappa_oto'],
-                    'lapse': param_values['lapse']}
 
 
     def __computeLikelihood(self):
@@ -299,24 +278,23 @@ class PSI_RiF:
         return param_distributions
 
 
-    def calcParameterVariances(self):
-        # calculate parameter distributions
-        param_distributions = self.__calcSigmaParameterValues(self.calcParameterDistributions(), convert=False)
+    def calcParameterStandardDeviations(self):
+        # calculate marginalized parameter distributions
+        param_distributions = self.calcParameterDistributions()
 
-        # calculate normalized linear parameter ranges
-        param_values_norm = {param: np.linspace(0, 1, len(self.sigma_params[param])) for param in self.sigma_params.keys()}
+        # calculate normalized parameter distribution standard deviations
+        param_sds = {}
+        for param in self.params.keys():
+            # calculate normalized parameter mean value
+            param_mean_norm = np.sum(param_distributions[param] * self.params_norm[param])
 
-        # calculate normalized parameter values distribution variances
-        param_variances = {}
-        for param in self.sigma_params.keys():
-            # normalize parameter mean value
-            param_mean_norm = np.sum(param_distributions[param] * param_values_norm[param])
+            # calculate normalized standard deviation for one parameter
+            sd_norm = np.sqrt(np.sum(param_distributions[param] * (self.params_norm[param] - param_mean_norm)**2))
 
-            # calculate variance and add variance to dictionary
-            variance = np.sqrt(np.sum(param_distributions[param] * (param_values_norm[param] - param_mean_norm)**2))
-            param_variances[param.replace('sigma', 'kappa')] = variance
+            # add parameter standard deviation to param_sds
+            param_sds[param] = sd_norm
 
-        return param_variances
+        return param_sds
 
 
     def calcNegLogLikelihood(self, data):
