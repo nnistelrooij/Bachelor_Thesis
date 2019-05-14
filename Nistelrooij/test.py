@@ -17,14 +17,15 @@ def sig2kap(sig):  # in degrees
 
 kappa_ver = sig2kap(np.linspace(10.01, 0.0, 10))
 # kappa_ver = [sig2kap(4.87)]
-kappa_hor = sig2kap(np.linspace(99.12, 5.4, 10))
-# kappa_hor = [sig2kap(52.26)]
-tau = np.linspace(0.58, 1, 10)
-# tau = [0.8]
-kappa_oto = sig2kap(np.linspace(2.71, 1.71, 10))
-# kappa_oto = [sig2kap(2.21)]
-lapse = np.linspace(0.0, 0.06, 10)
-# lapse = [0.02]
+# kappa_hor = sig2kap(np.linspace(99.12, 5.4, 10))
+kappa_hor = [sig2kap(52.26)]
+# tau = np.linspace(0.58, 1, 10)
+tau = [0.8]
+# kappa_oto = sig2kap(np.linspace(2.71, 1.71, 10))
+kappa_oto = [sig2kap(2.21)]
+# lapse = np.linspace(0.0, 0.06, 10)
+lapse = [0.02]
+
 
 params = OrderedDict()
 params['kappa_ver'] = kappa_ver
@@ -74,12 +75,13 @@ genAgent = GenerativeAgent(params_gen, stimuli)
 # initialize psi object
 psi = PSI_RiF(params, stimuli)
 
-# number of iterations of the experiment and number of experiments
+# number of iterations of the experiment and (current) number of experiments
 iterations_num = 500
-experiments_num = 20
+experiments_num = 2
+current_experiment_num = 0
 
 # initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
-# plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
 # plotter.plotGenProbTable()
 # plotter.plotGenVariances()
 # plotter.plotGenWeights()
@@ -99,13 +101,14 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
     psi.reset(stim_selection)
 
     # reset plotter to plot new figures
-    # plotter.reset()
+    plotter.reset()
 
     # reset printer for new experiment
     printer.reset()
 
     # run model for given number of iterations
-    print 'inferring model ' + stim_selection + 'ly'
+    current_experiment_num += 1
+    print 'inferring model %sly (%d/%d)' % (stim_selection, current_experiment_num, experiments_num)
     for _ in trange(iterations_num):
         # get stimulus from psi object
         rod, frame = psi.stim
@@ -136,21 +139,21 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
         # plot negative log likelihood of responses thus far as a surface
         # plotter.plotNegLogLikelihood(projection='3d')
 
-        # plot parameter value distribution variances of each trial
-        # plotter.plotParameterVariances()
+        # plot parameter value distribution standard deviations of each trial
+        # plotter.plotParameterStandardDeviations()
 
         # actually plot all the figures
-        # plotter.plot()
+        plotter.plot()
 
 
         # print selected stimuli data
         # printer.printStimuli()
 
         # print parameter distributions data
-        printer.printParameterDistributions()
+        # printer.printParameterDistributions()
 
         # print parameter distribution variances data
-        printer.printParameterVariances()
+        printer.printParameterStandardDeviations()
 
         # print negative log likelihood data
         # printer.printNegLogLikelihood()
