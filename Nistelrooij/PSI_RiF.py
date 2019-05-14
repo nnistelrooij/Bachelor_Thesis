@@ -14,15 +14,16 @@ class PSI_RiF:
     # Create parameter space and initialize prior, likelihood and stimulus
     def __init__(self, params, stimuli, stim_selection='adaptive'):
         # initialize parameter grids
-        self.kappa_ver = params['kappa_ver']
-        self.kappa_hor = params['kappa_hor']
-        self.tau = params['tau']
-        self.kappa_oto = params['kappa_oto']
-        self.lapse = params['lapse']
+        self.kappa_ver = np.copy(params['kappa_ver'])
+        self.kappa_hor = np.copy(params['kappa_hor'])
+        self.tau = np.copy(params['tau'])
+        self.kappa_oto = np.copy(params['kappa_oto'])
+        self.lapse = np.copy(params['lapse'])
 
         # store parameter values dictionary and the same dictionary, but with sigmas
         self.params = params
-        self.sigma_params = self.__calcSigmaParameterValues(self.params, convert=True)
+        self.sigma_params = self.__calcSigmaParameterValues(
+            {param: np.copy(self.params[param]) for param in self.params.keys()}, convert=True)
 
         # Initialize stimulus grids
         self.rods = stimuli['rods']
@@ -299,30 +300,20 @@ class PSI_RiF:
 
 
     def calcParameterVariances(self):
-        # calculate normalized linear parameter ranges
-        param_values_norm = {param: np.linspace(0, 1, len(self.sigma_params[param])) for param in self.sigma_params.keys()}
-
-        # calculate non-normalized parameter mean values as sigma values
-        param_means = self.__calcSigmaParameterValues(self.calcParameterValues(mode='mean'), convert=True)
-
         # calculate parameter distributions
         param_distributions = self.__calcSigmaParameterValues(self.calcParameterDistributions(), convert=False)
 
-        # normalize each parameter mean value
-        param_means_norm = {}
-        for param in self.sigma_params.keys():
-            # calculate minimum and maximum of parameter range
-            param_min = np.amin(self.sigma_params[param])
-            param_max = np.amax(self.sigma_params[param])
+        # calculate normalized linear parameter ranges
+        param_values_norm = {param: np.linspace(0, 1, len(self.sigma_params[param])) for param in self.sigma_params.keys()}
 
-            if param_min == param_max:  # choose normalized mean of 0.5 instead of dividing by 0
-                param_means_norm[param] = 0.5
-            else:  # calculate normalized mean as proportion of linear range width
-                param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
-
+        # calculate normalized parameter values distribution variances
         param_variances = {}
         for param in self.sigma_params.keys():
-            variance = np.sqrt(np.sum(param_distributions[param] * (param_values_norm[param] - param_means_norm[param])**2))
+            # normalize parameter mean value
+            param_mean_norm = np.sum(param_distributions[param] * param_values_norm[param])
+
+            # calculate variance and add variance to dictionary
+            variance = np.sqrt(np.sum(param_distributions[param] * (param_values_norm[param] - param_mean_norm)**2))
             param_variances[param.replace('sigma', 'kappa')] = variance
 
         return param_variances
