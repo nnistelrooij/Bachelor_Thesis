@@ -5,6 +5,11 @@ from sklearn.utils.extmath import cartesian
 from tqdm import trange
 
 
+# transforms kappa values into sigma values in degrees
+def kap2sig(kap):
+    return np.sqrt((3994.5 / kap) - 22.6)
+
+
 class PSI_RiF:
     # Create parameter space and initialize prior, likelihood and stimulus
     def __init__(self, params, stimuli, stim_selection='adaptive'):
@@ -14,7 +19,10 @@ class PSI_RiF:
         self.tau = params['tau']
         self.kappa_oto = params['kappa_oto']
         self.lapse = params['lapse']
+
+        # store parameter values dictionary and the same dictionary, but with sigmas
         self.params = params
+        self.sigma_params = self.__calcSigmaParameterValues(self.params, convert=True)
 
         # Initialize stimulus grids
         self.rods = stimuli['rods']
@@ -41,6 +49,21 @@ class PSI_RiF:
 
         # reset psi object to initial values
         self.reset(stim_selection)
+
+
+    def __calcSigmaParameterValues(self, param_values, convert):
+        if convert:
+            return {'sigma_ver': kap2sig(param_values['kappa_ver']),
+                    'sigma_hor': kap2sig(param_values['kappa_hor']),
+                    'tau': param_values['tau'],
+                    'sigma_oto': kap2sig(param_values['kappa_oto']),
+                    'lapse': param_values['lapse']}
+        else:
+            return {'sigma_ver': param_values['kappa_ver'],
+                    'sigma_hor': param_values['kappa_hor'],
+                    'tau': param_values['tau'],
+                    'sigma_oto': param_values['kappa_oto'],
+                    'lapse': param_values['lapse']}
 
 
     def __computeLikelihood(self):
@@ -275,46 +298,34 @@ class PSI_RiF:
         return param_distributions
 
 
-    def calcParameterVariances(self, normalize=True):
-        # calculate non-normalized parameter mean values
-        param_means = self.calcParameterValues(mode='mean')
-                
+    def calcParameterVariances(self):
+        # calculate normalized linear parameter ranges
+        param_values_norm = {param: np.linspace(0, 1, len(self.sigma_params[param])) for param in self.sigma_params.keys()}
+
+        # calculate non-normalized parameter mean values as sigma values
+        param_means = self.__calcSigmaParameterValues(self.calcParameterValues(mode='mean'), convert=True)
+
         # calculate parameter distributions
-        param_distributions = self.calcParameterDistributions()
-        
-        # make dictionary with each parameter values distribution variance normalized or not
-        if normalize:
-            # calculate normalized parameter ranges
-            param_values_norm = {param: np.linspace(0, 1, len(self.params[param])) for param in self.params.keys()}
+        param_distributions = self.__calcSigmaParameterValues(self.calcParameterDistributions(), convert=False)
 
-            # normalize each parameter mean value
-            param_means_norm = {}
-            for param in self.params.keys():
-                # calculate minimum and maximum of parameter range
-                param_min = self.params[param][0]
-                param_max = self.params[param][-1]
+        # normalize each parameter mean value
+        param_means_norm = {}
+        for param in self.sigma_params.keys():
+            # calculate minimum and maximum of parameter range
+            param_min = np.amin(self.sigma_params[param])
+            param_max = np.amax(self.sigma_params[param])
 
-                if param_min == param_max:
-                    # choose normalized mean of 0.5 instead of dividing by 0
-                    param_means_norm[param] = 0.5
-                else:
-                    # calculate normalized mean as proportion of range width
-                    param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
+            if param_min == param_max:  # choose normalized mean of 0.5 instead of dividing by 0
+                param_means_norm[param] = 0.5
+            else:  # calculate normalized mean as proportion of linear range width
+                param_means_norm[param] = (param_means[param] - param_min) / (param_max - param_min)
 
-            param_variances = self.__calcParameterVariances(param_values_norm, param_means_norm, param_distributions)
-        else:
-            param_variances = self.__calcParameterVariances(self.params, param_means, param_distributions)
+        param_variances = {}
+        for param in self.sigma_params.keys():
+            variance = np.sqrt(np.sum(param_distributions[param] * (param_values_norm[param] - param_means_norm[param])**2))
+            param_variances[param.replace('sigma', 'kappa')] = variance
 
         return param_variances
-
-
-    # calculate parameter values distribution variances
-    def __calcParameterVariances(self, param_values, param_means, param_distributions):
-        variances = {}
-        for param in self.params.keys():
-            variances[param] = np.sqrt(np.sum(param_distributions[param] * (param_values[param] - param_means[param])**2))
-
-        return variances
 
 
     def calcNegLogLikelihood(self, data):
