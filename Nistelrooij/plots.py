@@ -339,7 +339,7 @@ class Plotter:
         plot.set_xlabel('trial number')
         plot.set_ylabel('%s SD' % param)
         plot.set_xlim(0, self.iterations_num)
-        plot.set_title('%s Standard Deviation for Each Trial' % param)
+        plot.set_title('%s Normalized Standard Deviation for Each Trial' % param)
 
 
     def plotNegLogLikelihood(self, projection=None, responses_num=1):
