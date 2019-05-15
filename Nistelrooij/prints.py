@@ -155,6 +155,7 @@ class Printer:
     def __printParameterStandardDeviations(self, param):
         param_sds = {'adaptive': np.array(self.param_sds[param]['adaptive']),
                      'random': np.array(self.param_sds[param]['random'])}
+        std_max = np.std(np.linspace(0, 1, len(self.params[param])))
 
         for stim_selection in ['adaptive', 'random']:
             print '\n\n\n%s %s Standard Deviations:\n\n\n' % (param, stim_selection)
@@ -163,7 +164,7 @@ class Printer:
             for i in range(self.iterations_num):
                 mean = np.mean(param_sds[stim_selection][:, i])
                 std = np.std(param_sds[stim_selection][:, i])
-                print (i + 1), mean, max(mean - std, 0), min(mean + std, 0.31914)
+                print (i + 1), mean, max(mean - std, 0), min(mean + std, std_max)
 
 
     def printNegLogLikelihood(self):
