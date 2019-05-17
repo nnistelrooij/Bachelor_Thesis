@@ -42,16 +42,16 @@ class Printer:
             self.current_experiment_num += 1
 
 
-    def printGenVariances(self):
-        # get variances from generative agent
-        variances = self.genAgent.calcVariances()
+    def printGenStandardDeviations(self):
+        # get standard deviations from generative agent
+        sds = self.genAgent.calcStandardDeviations()
 
         # print data as space separated values
-        print '\n\n\nGenerative Variances:\n\n\n'
+        print '\n\n\nGenerative Standard Deviations:\n\n\n'
         print 'frame otoliths context'
 
         for i in range(len(self.stimuli['frames'])):
-            print self.stimuli['frames'][i] * 180 / np.pi, variances['otoliths'][i], variances['context'][i]
+            print self.stimuli['frames'][i] * 180 / np.pi, sds['otoliths'][i], sds['context'][i]
 
 
     def printGenWeights(self):

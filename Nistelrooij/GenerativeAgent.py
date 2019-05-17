@@ -116,30 +116,30 @@ class GenerativeAgent:
         return responses
 
 
-    # calculate otoliths and visual context variances in degrees
-    def calcVariances(self):
-        # compute otoliths variance, repeated |frames| times
-        otoliths_variance = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
+    # calculate otoliths and visual context standard deviations in degrees
+    def calcStandardDeviations(self):
+        # compute otolith organs standard deviation, repeated |frames| times
+        otoliths_sd = np.repeat(kap2sig(self.kappa_oto), self.frame_num)
 
-        # compute vertical visual context variance for each frame orientation
+        # compute vertical visual context standard deviation for each frame orientation
         kappa1, _ = self.__computeKappas()
-        context_variance = kap2sig(kappa1)
+        context_sd = kap2sig(kappa1)
 
-        # return variances in dictionary
-        return {'otoliths': otoliths_variance, 'context': context_variance}
+        # return standard deviations in dictionary
+        return {'otoliths': otoliths_sd, 'context': context_sd}
 
 
     # calculate otoliths and visual context weights
     def calcWeights(self):
-        # calculate otoliths and visual context variances in degrees
-        variances = self.calcVariances()
+        # calculate otoliths and visual context standard deviations in degrees
+        sds = self.calcStandardDeviations()
 
         # calculate normalizing term
-        denominator = (1.0 / variances['otoliths']) + (1.0 / variances['context'])
+        denominator = (1.0 / sds['otoliths']**2) + (1.0 / sds['context']**2)
 
         # compute weights with equation given in Alberts et al. (2018), displayed in Alberts et al. (2017)
-        weights = {'otoliths': (1.0 / variances['otoliths']) / denominator,
-                   'context': (1.0 / variances['context']) / denominator}
+        weights = {'otoliths': (1.0 / sds['otoliths']**2) / denominator,
+                   'context': (1.0 / sds['context']**2) / denominator}
 
         return weights
 
