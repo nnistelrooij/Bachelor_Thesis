@@ -15,10 +15,10 @@ def sig2kap(sig):  # in degrees
     return 3994.5 / (sig2 + 22.6)
 
 
-kappa_ver = sig2kap(np.linspace(10.01, 0.0, 10))
+kappa_ver = sig2kap(np.linspace(10.01, 0.0, 25))
 # kappa_ver = [sig2kap(4.87)]
-# kappa_hor = sig2kap(np.linspace(99.12, 5.4, 10))
-kappa_hor = [sig2kap(52.26)]
+kappa_hor = sig2kap(np.linspace(99.12, 5.4, 25))
+# kappa_hor = [sig2kap(52.26)]
 # tau = np.linspace(0.58, 1, 10)
 tau = [0.8]
 # kappa_oto = sig2kap(np.linspace(2.71, 1.71, 10))
@@ -35,21 +35,21 @@ params['kappa_oto'] = kappa_oto
 params['lapse'] = lapse
 
 
-# control
+# young
 kappa_ver_gen = sig2kap(4.87)
 kappa_hor_gen = sig2kap(52.26)
 tau_gen = 0.8
 kappa_oto_gen = sig2kap(2.21)
 lapse_gen = 0.02
 
-# functional
+# old
 # kappa_ver_gen = sig2kap(8.09)
 # kappa_hor_gen = sig2kap(39.28)
 # tau_gen = 0.97
 # kappa_oto_gen = sig2kap(5.75)
 # lapse_gen = 0.02
 
-# dysfunctional
+# patient
 # kappa_ver_gen = sig2kap(4.99)
 # kappa_hor_gen = sig2kap(67.51)
 # tau_gen = 0.87
@@ -80,21 +80,21 @@ iterations_num = 500
 experiments_num = 2
 current_experiment_num = 0
 
-# initialize plotter and plot generative distribution, weights, variances and bias and the negative log likelihood
+# initialize plotter and plot generative distribution, weights, SDs and bias and the negative log likelihood
 plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
-# plotter.plotGenProbTable()
-# plotter.plotGenVariances()
-# plotter.plotGenWeights()
-# plotter.plotGenPSE()
-# plotter.plotNegLogLikelihood(responses_num=500)
-# plotter.plot()
+plotter.plotGenProbTable()
+plotter.plotGenStandardDeviations()
+plotter.plotGenWeights()
+plotter.plotGenPSE()
+plotter.plotNegLogLikelihood(responses_num=500)
+plotter.plot()
 
 
-# initialize printer and print generative variances, weights and bias
+# initialize printer and print generative standard deviations, weights and bias
 printer = Printer(params, stimuli, genAgent, psi, iterations_num, experiments_num)
-# printer.printGenVariances()
-# printer.printGenWeights()
-# printer.printGenPSE()
+printer.printGenStandardDeviations()
+printer.printGenWeights()
+printer.printGenPSE()
 
 for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
     # set stimulus selection mode and reset psi object to initial values
@@ -118,15 +118,15 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
 
 
         # plot selected stimuli
-        # plotter.plotStimuli()
+        plotter.plotStimuli()
 
         # plot updated parameter values based on mean and MAP
-        # plotter.plotParameterValues()
+        plotter.plotParameterValues()
 
         # the parameter distributions may be plotted at most once (so comment out at least one)
 
         # plot parameter distributions of current trial
-        # plotter.plotParameterDistributions()
+        plotter.plotParameterDistributions()
 
         # plot parameter distributions of each trial as surfaces
         # plotter.plotParameterDistributions(projection='3d')
@@ -134,33 +134,32 @@ for stim_selection in ['adaptive', 'random']*(experiments_num / 2):
         # the negative log likelihood may be plotted at most once (so comment out at least one)
 
         # plot negative log likelihood of responses thus far as a contour plot
-        # plotter.plotNegLogLikelihood()
+        plotter.plotNegLogLikelihood()
 
         # plot negative log likelihood of responses thus far as a surface
         # plotter.plotNegLogLikelihood(projection='3d')
 
         # plot parameter value distribution standard deviations of each trial
-        # plotter.plotParameterStandardDeviations()
+        plotter.plotParameterStandardDeviations()
 
         # actually plot all the figures
         plotter.plot()
 
 
         # print selected stimuli data
-        # printer.printStimuli()
+        printer.printStimuli()
 
         # print parameter distributions data
-        # printer.printParameterDistributions()
+        printer.printParameterDistributions()
 
-        # print parameter distribution variances data
+        # print parameter distribution standard deviations data
         printer.printParameterStandardDeviations()
 
         # print negative log likelihood data
-        # printer.printNegLogLikelihood()
+        printer.printNegLogLikelihood()
 
         # progress the printer to the next trial
         printer.nextTrial()
-
 
 
         # add data to psi object

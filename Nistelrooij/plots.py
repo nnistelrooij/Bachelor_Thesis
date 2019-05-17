@@ -64,21 +64,21 @@ class Plotter:
         prob_table_plot.set_title('Generative Rod Distribution for Each Frame Orientation')
 
 
-    def plotGenVariances(self):
-        # get variances from generative agent
-        variances = self.genAgent.calcVariances()
+    def plotGenStandardDeviations(self):
+        # get standard deviations from generative agent
+        sds = self.genAgent.calcStandardDeviations()
 
-        # initialize variances figure and plot
-        variances_figure = plt.figure(figsize=(8, 6))
-        variances_plot = variances_figure.add_subplot(1, 1, 1)
+        # initialize standard deviations figure and plot
+        sds_figure = plt.figure(figsize=(8, 6))
+        sds_plot = sds_figure.add_subplot(1, 1, 1)
 
-        # plot variances
-        variances_plot.plot(self.stimuli['frames'] * 180 / np.pi, variances['otoliths'], label='otoliths variance')
-        variances_plot.plot(self.stimuli['frames'] * 180 / np.pi, variances['context'], label='visual context variance')
-        variances_plot.set_xlabel('frame ($^\circ$)')
-        variances_plot.set_ylabel('variance ($^\circ$)')
-        variances_plot.set_title('Variances of Otoliths and Visual Contextual Information')
-        variances_plot.legend()
+        # plot sds
+        sds_plot.plot(self.stimuli['frames'] * 180 / np.pi, sds['otoliths'], label='otoliths standard deviation')
+        sds_plot.plot(self.stimuli['frames'] * 180 / np.pi, sds['context'], label='visual context standard deviation')
+        sds_plot.set_xlabel('frame ($^\circ$)')
+        sds_plot.set_ylabel('SD ($^\circ$)')
+        sds_plot.set_title('Standard Deviations of Otoliths and Visual Contextual Information')
+        sds_plot.legend()
 
 
     def plotGenWeights(self):
