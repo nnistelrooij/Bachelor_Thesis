@@ -371,9 +371,10 @@ class Plotter:
 
 
     def __initNegLogLikelihoodFigure(self, projection):
-        # initialize negative log likelihood figure and plot
+        # initialize negative log likelihood figure, plot and color bar
         self.neg_log_likelihood_figure = plt.figure(figsize=(8, 6))
         self.neg_log_likelihood_plot = self.neg_log_likelihood_figure.add_subplot(1, 1, 1, projection=projection)
+        self.neg_log_likelihood_colorbar = None
 
         # initialize the two free parameters, self.free_param1 and self.free_param2
         free_params = [param for param in self.params.keys() if len(self.params[param]) > 1]
@@ -411,7 +412,7 @@ class Plotter:
         # set the other plot settings
         plot.set_xlabel(self.free_param1)
         plot.set_ylabel(self.free_param2)
-        plot.set_zlabel(('-logL(%s, %s)' % (self.free_param1, self.free_param2)))
+        plot.set_zlabel('-logL(%s, %s)' % (self.free_param1, self.free_param2))
 
         # set the title with a suffix dependent on the type of data
         if responses_num == 1:
@@ -432,9 +433,17 @@ class Plotter:
         # plot generative parameter values as a point and the negative log likelihood as a contour plot
         plot.clear()
         plot.plot(self.params_gen[self.free_param1], self.params_gen[self.free_param2], marker='o', label='generative parameter values')
-        plot.contourf(self.params[self.free_param1], self.params[self.free_param2], self.neg_log_likelihood)
+        surface = plot.contourf(self.params[self.free_param1], self.params[self.free_param2], self.neg_log_likelihood)
         plot.set_xlabel(self.free_param1)
         plot.set_ylabel(self.free_param2)
+
+        # add axis of colorbar to figure and save colorbar axis
+        if self.neg_log_likelihood_colorbar is None:
+            self.neg_log_likelihood_colorbar = self.neg_log_likelihood_figure.colorbar(surface)
+
+        # draw colorbar of new negative log likelihood surface over old colorbar axis
+        self.neg_log_likelihood_figure.colorbar(surface, cax=self.neg_log_likelihood_colorbar.ax)
+        self.neg_log_likelihood_colorbar.set_label('-logL(%s, %s)' % (self.free_param1, self.free_param2))
 
         # set the title with a suffix dependent on the type of data
         if responses_num == 1:
