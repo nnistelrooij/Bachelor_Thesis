@@ -81,7 +81,7 @@ experiments_num = 2
 current_experiment_num = 0
 
 # initialize plotter and plot generative distribution, weights, SDs and bias and the negative log likelihood
-plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=iterations_num)
+plotter = Plotter(params, params_gen, stimuli, genAgent, psi, iterations_num, plot_period=25)
 plotter.plotGenProbTable()
 plotter.plotGenStandardDeviations()
 plotter.plotGenWeights()
